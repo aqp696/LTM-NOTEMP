@@ -1,0 +1,6 @@
+#!/bin/sh
+
+yo=`whoami`
+for i in `ipcs -mp | grep $yo | cut -d ' ' -f1`; do 
+ipcrm -m $i
+done;
