@@ -185,5 +185,6 @@ list<buf_pkt>::iterator buscar_buffer_libre(){
         KERNEL->buffers_libres.push_back(nodo);
     }
     it_libres = KERNEL->buffers_libres.begin();
+    fprintf(stderr,"\nDentro de la funcion buscar_buffer_libre()");
     return it_libres;
 }
