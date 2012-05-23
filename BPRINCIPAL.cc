@@ -163,7 +163,7 @@ void bucle_principal(void) {
                          fprintf(stderr,"%d",KERNEL->CXs[resul].puerto_origen);
                          fprintf(stderr,"%d",KERNEL->CXs[resul].puerto_destino);
                          //desbloquear_acceso(&KERNEL->SEMAFORO);
-                         despierta_conexion(&KERNEL->CXs[7].barC);
+                         despierta_conexion(&KERNEL->CXs[resul].barC);
                          desbloquear_acceso(&KERNEL->SEMAFORO);
                          //despierta_conexion(&KERNEL->barrera);
                          fprintf(stderr,"\nDespertamos conexion\n");
