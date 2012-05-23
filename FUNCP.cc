@@ -88,15 +88,15 @@ int comprobar_parametros(const t_direccion *tsap_destino, t_direccion *tsap_orig
 
 
 int buscar_celda_libre() {
-    //int i;
+    int i;
     int indice=0;
-//    for (i = 0; i < NUM_MAX_CXs; i++) {
-//        if (KERNEL->CXs[i].celda_ocupada == 0) {
-//            indice = i;
-//            break;
-//        }
-//    }
-    indice = KERNEL->CXs_libres.front();
+    for (i = 0; i < NUM_MAX_CXs; i++) {
+        if (KERNEL->CXs[i].celda_ocupada == 0) {
+            indice = i;
+            break;
+        }
+    }
+    //indice = KERNEL->CXs_libres.front();
     return indice;
 }
 
