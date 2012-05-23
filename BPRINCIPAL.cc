@@ -135,7 +135,7 @@ void bucle_principal(void) {
                         }
                         fprintf(stderr,"\nid_destino es: %d",puntero_pkt->cabecera.id_local);
                         fprintf(stderr,"\nid_local es: %d",puntero_pkt->cabecera.id_destino);
-                        desbloquear_acceso(&KERNEL->SEMAFORO);
+                        //desbloquear_acceso(&KERNEL->SEMAFORO);
                         //completamos tsap_origen y tsap_destino
                         tsap_origen.ip = KERNEL->CXs[resul].ip_local;
                         tsap_origen.puerto = puntero_pkt->cabecera.puerto_dest;
@@ -146,9 +146,9 @@ void bucle_principal(void) {
                         //rellenamos los datos
                         it_libres->contador_rtx = NUM_MAX_RTx;
                         
-                        it_tx = KERNEL->CXs[resul].TX.end();
-                        KERNEL->CXs[resul].TX.splice(it_tx,KERNEL->buffers_libres,it_libres);
-                        it_tx = KERNEL->CXs[resul].TX.end();
+                        //it_tx = KERNEL->CXs[resul].TX.end();
+                        //KERNEL->CXs[resul].TX.splice(it_tx,KERNEL->buffers_libres,it_libres);
+                        //it_tx = KERNEL->CXs[resul].TX.end();
                         
                         //creamos paquete CC
                         fprintf(stderr,"\nCreamos pakete");
@@ -159,6 +159,7 @@ void bucle_principal(void) {
                          //despertamos al listen
                          fprintf(stderr,"\nvamos a ejecutar despierta_conexion()");
                          fprintf(stderr,"\ndespertamos la conexion de indice: %d",resul);
+                         desbloquear_acceso(&KERNEL->SEMAFORO)
                          despierta_conexion(&KERNEL->CXs[resul].barC);
                          fprintf(stderr,"\nDespertamos conexion\n");
                         break;
