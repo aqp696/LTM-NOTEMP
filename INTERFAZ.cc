@@ -12,8 +12,9 @@ char dir_proto[64] = KERNEL_MEM_ADDR;
 
 int t_connect(const t_direccion *tsap_destino, t_direccion *tsap_origen) {
     int res = EXOK;
-    tpdu pkt;
     t_direccion tsap_destino_aux;
+    list<buf_pkt>::iterator it_buffer;
+    list<buf_pkt>::iterator it_tx;
 #ifdef DEPURA
     fprintf(stderr,"\nObtenemos el Kernel");
 #endif
@@ -75,12 +76,17 @@ int t_connect(const t_direccion *tsap_destino, t_direccion *tsap_origen) {
     fprintf(stderr,"\ncreamos el pakete");
     //creamos el paquete
     //usamos tsap_destino_aux porque este ya no es const y asi crear_pkt ya no es const
+    it_buffer = buscar_buffer_libre();
+    it_buffer->contador_rtx = NUM_MAX_RTx;
+    it_tx = KERNEL->CXs[indice_celda].TX.end();
+    KERNEL->CXs[indice_celda].TX.splice(it_tx,KERNEL->buffers_libres,it_buffer);
+    it_tx = KERNEL->CXs[indice_celda].TX.end();
     memcpy(&tsap_destino_aux,tsap_destino,sizeof(t_direccion));
-    crear_pkt(&pkt,CR,&tsap_destino_aux,tsap_origen,NULL,0,indice_celda,0);
+    crear_pkt(it_tx->pkt,CR,&tsap_destino_aux,tsap_origen,NULL,0,indice_celda,0);
 
     fprintf(stderr,"\nEnviamos el pakete y nos bloqueamos");
     //enviamos el paquete y nos bloqueamos
-    enviar_tpdu(tsap_destino->ip,&pkt,sizeof(tpdu));
+    enviar_tpdu(tsap_destino->ip,it_tx->pkt,sizeof(tpdu));
     fprintf(stderr,"\nla id_local es: %d",indice_celda);
     bloquea_llamada(&KERNEL->CXs[indice_celda].barC);
     
@@ -103,7 +109,7 @@ int t_connect(const t_direccion *tsap_destino, t_direccion *tsap_origen) {
     ltm_exit_kernel((void**)&KERNEL);
 
     fprintf(stderr,"\nRetornamos a la aplicacion");
-    return res;
+    return indice_celda;
 }
 
 int t_listen(t_direccion *tsap_escucha, t_direccion *tsap_remota) {
@@ -151,7 +157,6 @@ int t_listen(t_direccion *tsap_escucha, t_direccion *tsap_remota) {
     KERNEL->num_CXs++;
 
     //bloquear acceso
-    inicia_barrera(&KERNEL->CXs[indice_celda].barC);
 
     fprintf(stderr,"\nRellenamos los datos de la conexion");
     KERNEL->CXs[indice_celda].ap_pid = pid;
@@ -190,7 +195,7 @@ int t_listen(t_direccion *tsap_escucha, t_direccion *tsap_remota) {
     desbloquear_acceso(&KERNEL->SEMAFORO);
     fprintf(stderr,"\nDevolvemos el kernel y retornamos a la aplicacion");
     ltm_exit_kernel((void**) & KERNEL);
-    return res;
+    return indice_celda;
 }
 
 

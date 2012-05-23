@@ -26,6 +26,7 @@ using namespace std;
 #define tiempo_rtx_pkt tiempo_actual()-KERNEL->t_inicio+200
 #define tiempo_rtx_red tiempo_actual() -KERNEL->t_inicio+1000
 #define tiempo_rtx_aplic tiempo_actual() -KERNEL->t_inicio+1000
+#define NUM_MAX_RTx 6
 
 //ESTADOS DE ENVIO DE PKT
 #define no_confirmado 1
@@ -136,6 +137,7 @@ typedef struct _kernel_shm {
   int num_CXs;
   int indice_libre;
   semaforo_t SEMAFORO;
+  uint16_t NUM_BUF_PKTS;
   uint32_t t_inicio;
   list<evento_t, shm_Allocator<evento_t> >::iterator it_tipo_vencimiento;
   list<buf_pkt, shm_Allocator<buf_pkt> >buffers_libres;

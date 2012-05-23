@@ -109,7 +109,8 @@ void crear_pkt(tpdu *pkt,char tipo, t_direccion *tsap_destino,t_direccion *tsap_
     pkt->cabecera.ip_local = tsap_origen->ip;
     pkt->cabecera.id_destino = id_destino;
     pkt->cabecera.id_local = id_local;
-    printf("\nCopiamos los datos al pakete");
+    pkt->cabecera.tamanho_datos=longitud;
+    fprintf(stderr,"\nCopiamos los datos al pakete");
     memcpy (pkt->datos,datos,longitud);
 }
 

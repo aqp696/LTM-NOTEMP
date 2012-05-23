@@ -10,6 +10,7 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <stdbool.h>
+#include <sys/time.h>
 
 #include "CONFP.h"
 
@@ -40,9 +41,11 @@ void bucle_principal(void) {
     bloquear_acceso(&KERNEL->SEMAFORO);
     KERNEL->num_CXs=0;
     KERNEL->indice_libre =0;
+    KERNEL->NUM_BUF_PKTS = NUM_BUF_PKTS;
     int i;
     //inicializamos cada conexion
     for(i=0;i<NUM_MAX_CXs;i++){
+        inicia_barrera(&KERNEL->CXs[i].barC);
         memset(&KERNEL->CXs[i],0,sizeof(conexion_t));
         KERNEL->CXs[i].estado_cx = CLOSED;
         INICIA_LISTA(KERNEL->CXs[i].TX,buf_pkt);
@@ -53,6 +56,11 @@ void bucle_principal(void) {
     //Inicializamos la lista de conexiones libres
     INICIA_LISTA(KERNEL->CXs_libres, int);
     inicializar_CXs_libres();
+    
+    struct timeval tv;
+    gettimeofday(&tv,NULL);
+    KERNEL->t_inicio = tv.tv_sec*1000+tv.tv_usec/1000;
+    
     desbloquear_acceso(&KERNEL->SEMAFORO);
 
     do {
@@ -78,6 +86,12 @@ void bucle_principal(void) {
                 puntero_pkt = (tpdu *)(pkt+offset);
                 
                 bloquear_acceso(&KERNEL->SEMAFORO);
+                
+                list<buf_pkt>::iterator it_buffer;
+                list<buf_pkt>::iterator it_libres;
+                list<buf_pkt>::iterator it_tx;
+                int resul;
+                
                 switch(puntero_pkt->cabecera.tipo){
                     
                     case CC:
@@ -103,7 +117,7 @@ void bucle_principal(void) {
                     case CR:
                         fprintf(stderr,"\nRecibido un CONEXION REQUEST");
                         //comprobar si tiene conexcion preparada en listen
-                        int resul = asign_conexion_CR(puntero_pkt,KERNEL);
+                        resul = asign_conexion_CR(puntero_pkt,KERNEL);
                         fprintf(stderr,"\nLe asigno al connect la conexion: %d",resul);
                         if (resul == EXNOTSAP) {
                             paquete.cabecera.conexion_aceptada = resul;
@@ -124,17 +138,30 @@ void bucle_principal(void) {
                         tsap_origen.puerto = puntero_pkt->cabecera.puerto_dest;
                         tsap_destino.ip = ip_remota;
                         tsap_destino.puerto = puntero_pkt->cabecera.puerto_orig;
+                        
+                        it_libres = buscar_buffer_libre();
+                        //rellenamos los datos
+                        it_libres->contador_rtx = NUM_MAX_RTx;
+                        
+                        it_tx = KERNEL->CXs[resul].TX.end();
+                        KERNEL->CXs[resul].TX.splice(it_tx,KERNEL->buffers_libres,it_libres);
+                        it_tx = KERNEL->CXs[resul].TX.end();
+                        
                         //creamos paquete CC
                         fprintf(stderr,"\nCreamos pakete");
-                         crear_pkt(&paquete,CC,&tsap_destino,&tsap_origen,NULL,0,resul,puntero_pkt->cabecera.id_local);
+                         crear_pkt(it_tx->pkt,CC,&tsap_destino,&tsap_origen,NULL,0,resul,puntero_pkt->cabecera.id_local);
                          fprintf(stderr,"\nEnviamos pakete");
-                         enviar_tpdu(ip_remota,&paquete,sizeof(paquete));
+                         enviar_tpdu(ip_remota,it_tx->pkt,sizeof(tpdu));
                          fprintf(stderr,"\nEnviamos tpdu");
                          //despertamos al listen
                          despierta_conexion(&KERNEL->CXs[resul].barC);
                          fprintf(stderr,"\nDespertamos conexion\n");
                         break;
+                    case ACK:
+                        break;
+
                 }
+
 
 //                if (++cont == 1)
 //                    despierta_conexion(&KERNEL->CXs[0].barC);
