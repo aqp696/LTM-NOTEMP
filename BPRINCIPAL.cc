@@ -174,7 +174,33 @@ int procesa_argumentos(int argc, char ** argv) {
     //////////////////////////////////////////////////////////////
 
     LTM_PROTOCOL = 233;
-
+    int opt;
+    
+        while ((opt = getopt(argc, argv, "s:e:p:i:n:")) != -1) {
+            switch(opt){
+                case 's':
+                    strcpy(dir_proto, optarg);
+                    fprintf(stderr,"\ndir_proto: %s\n",dir_proto);
+                    break;
+                case 'e':
+                    pe = atoi(optarg);
+                    fprintf(stderr,"\npe: %d\n",pe);
+                    break;
+                case 'p':
+                    LTM_PROTOCOL = atoi(optarg);
+                    fprintf(stderr,"\nLTM_PROTOCOL: %d\n",LTM_PROTOCOL);
+                    break;
+                case 'i':
+                    strcpy(interfaz,optarg);
+                    fprintf(stderr,"\ninterfaz: %s\n",interfaz);
+                    break;
+                case 'n':
+                    NUM_BUF_PKTS = atoi(optarg);
+                    fprintf(stderr,"\nNUM_BUF_PKTS: %d\n",NUM_BUF_PKTS);
+                    break;
+            }
+                    
+        }
     if (argc >= 2) { // para el caso "./ltmd dir_proto ..."
         strcpy(dir_proto, argv[1]);
 	if (argc == 3) 
