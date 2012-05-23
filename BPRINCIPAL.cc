@@ -30,7 +30,7 @@ void bucle_principal(void) {
     //datos mios
     char pkt[MAX_LONG_PKT];
     tpdu *puntero_pkt;
-    tpdu paquete;//esto me vale de momento->> luego hacer malloc(sizeof(tpdu))
+    //tpdu paquete;//esto me vale de momento->> luego hacer malloc(sizeof(tpdu))
     t_direccion tsap_origen,tsap_destino;//no se si usarlas aqui o meterlas en la cabecera tcp
     //int iIdCx = 0; //cuando inicia ltmd iIdCx = 0, con cada CONNECT iIcCx++
 
@@ -118,12 +118,15 @@ void bucle_principal(void) {
                         fprintf(stderr,"\nRecibido un CONEXION REQUEST");
                         //comprobar si tiene conexcion preparada en listen
                         resul = asign_conexion_CR(puntero_pkt,KERNEL);
+                        it_libres = buscar_buffer_libre();
                         fprintf(stderr,"\nLe asigno al connect la conexion: %d",resul);
                         if (resul == EXNOTSAP) {
-                            paquete.cabecera.conexion_aceptada = resul;
+                            //paquete.cabecera.conexion_aceptada = resul;
+                            it_libres->pkt->cabecera.conexion_aceptada=resul;
                             KERNEL->CXs[resul].resultado_peticion = resul;
                         }else {
-                            paquete.cabecera.conexion_aceptada= 1;
+                            //paquete.cabecera.conexion_aceptada= 1;
+                            it_libres->pkt->cabecera.conexion_aceptada=1;
                             KERNEL->CXs[resul].estado_cx = ESTABLISHED;
                             KERNEL->CXs[resul].resultado_peticion = EXOK;
                             KERNEL->CXs[resul].puerto_destino = puntero_pkt->cabecera.puerto_orig;
@@ -139,7 +142,7 @@ void bucle_principal(void) {
                         tsap_destino.ip = ip_remota;
                         tsap_destino.puerto = puntero_pkt->cabecera.puerto_orig;
                         
-                        it_libres = buscar_buffer_libre();
+                        //it_libres = buscar_buffer_libre();
                         //rellenamos los datos
                         it_libres->contador_rtx = NUM_MAX_RTx;
                         
