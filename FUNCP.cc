@@ -120,6 +120,8 @@ int asign_conexion_CR(tpdu *puntero_pkt,kernel_shm_t *KERNEL) {
     int i;
     int indice = EXNOTSAP;
     for (i = 0; i < NUM_MAX_CXs; i++) {
+        if((puntero_pkt->cabecera.ip_destino.s_addr == KERNEL->CXs[i].ip_local.s_addr)
+                &&(puntero_pkt->cabecera.puerto_dest == KERNEL->CXs[i].puerto_origen)){
         if(
                 //ip_destino cero, puerto cero y listen
                 ((KERNEL->CXs[i].ip_destino.s_addr==0)&&(KERNEL->CXs[i].puerto_destino==0)&&(KERNEL->CXs[i].estado_cx==LISTEN))||
@@ -130,6 +132,7 @@ int asign_conexion_CR(tpdu *puntero_pkt,kernel_shm_t *KERNEL) {
                 ){
             indice=i;
             break;
+        }
         }
     }
 //        if ((((KERNEL->CXs[i].ip_destino.s_addr == 0 ||
