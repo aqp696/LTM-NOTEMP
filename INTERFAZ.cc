@@ -78,13 +78,13 @@ int t_connect(const t_direccion *tsap_destino, t_direccion *tsap_origen) {
     //usamos tsap_destino_aux porque este ya no es const y asi crear_pkt ya no es const
     it_buffer = buscar_buffer_libre();
     it_buffer->contador_rtx = NUM_MAX_RTx;
-    //it_tx = KERNEL->CXs[indice_celda].TX.end();
+    it_tx = KERNEL->CXs[indice_celda].TX.end();
     KERNEL->CXs[indice_celda].TX.splice(it_tx,KERNEL->buffers_libres,it_buffer);
     fprintf(stderr,"\nya hicimos el splice");
     it_tx = KERNEL->CXs[indice_celda].TX.end();
     memcpy(&tsap_destino_aux,tsap_destino,sizeof(t_direccion));
     fprintf(stderr,"\nvamos a llamar a crear_pkt");
-    crear_pkt(it_tx->pkt,CR,&tsap_destino_aux,tsap_origen,NULL,0,indice_celda,0);
+    crear_pkt(*(it_tx->pkt),CR,&tsap_destino_aux,tsap_origen,NULL,0,indice_celda,0);
     fprintf(stderr,"\nEnviamos el pakete y nos bloqueamos");
     //enviamos el paquete y nos bloqueamos
     enviar_tpdu(tsap_destino->ip,it_tx->pkt,sizeof(tpdu));
