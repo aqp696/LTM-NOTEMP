@@ -78,7 +78,7 @@ int t_connect(const t_direccion *tsap_destino, t_direccion *tsap_origen) {
     //usamos tsap_destino_aux porque este ya no es const y asi crear_pkt ya no es const
     it_buffer = buscar_buffer_libre();
     it_buffer->contador_rtx = NUM_MAX_RTx;
-    it_tx = KERNEL->CXs[indice_celda].TX.end();
+    //it_tx = KERNEL->CXs[indice_celda].TX.end();
     KERNEL->CXs[indice_celda].TX.splice(it_tx,KERNEL->buffers_libres,it_buffer);
     fprintf(stderr,"\nya hicimos el splice");
     it_tx = KERNEL->CXs[indice_celda].TX.end();
