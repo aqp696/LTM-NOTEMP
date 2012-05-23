@@ -201,13 +201,7 @@ int procesa_argumentos(int argc, char ** argv) {
             }
                     
         }
-    if (argc >= 2) { // para el caso "./ltmd dir_proto ..."
-        strcpy(dir_proto, argv[1]);
-	if (argc == 3) 
-	  // para la simulacion 2 pcs en uno utilizando el loopback
-	  strcpy(interfaz, argv[2]);
-    }
-
+    
     return EXOK;
 }
 
