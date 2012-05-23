@@ -149,9 +149,9 @@ void bucle_principal(void) {
                         
                         //creamos paquete CC
                         fprintf(stderr,"\nCreamos pakete");
-                         crear_pkt(it_tx->pkt,CC,&tsap_destino,&tsap_origen,NULL,0,resul,puntero_pkt->cabecera.id_local);
+                         crear_pkt(it_libres->pkt,CC,&tsap_destino,&tsap_origen,NULL,0,resul,puntero_pkt->cabecera.id_local);
                          fprintf(stderr,"\nEnviamos pakete");
-                         enviar_tpdu(ip_remota,it_tx->pkt,sizeof(tpdu));
+                         enviar_tpdu(ip_remota,it_libres->pkt,sizeof(tpdu));
                          fprintf(stderr,"\nEnviamos tpdu");
                          //despertamos al listen
                          despierta_conexion(&KERNEL->CXs[resul].barC);
