@@ -157,6 +157,7 @@ void bucle_principal(void) {
                          enviar_tpdu(ip_remota,it_libres->pkt,sizeof(tpdu));
                          fprintf(stderr,"\nEnviamos tpdu");
                          //despertamos al listen
+                         fprintf(stderr,"\nvamos a ejecutar despierta_conexion()");
                          despierta_conexion(&KERNEL->CXs[resul].barC);
                          fprintf(stderr,"\nDespertamos conexion\n");
                         break;
