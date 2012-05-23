@@ -159,7 +159,7 @@ void bucle_principal(void) {
                          //despertamos al listen
                          fprintf(stderr,"\nvamos a ejecutar despierta_conexion()");
                          fprintf(stderr,"\ndespertamos la conexion de indice: %d",resul);
-                         desbloquear_acceso(&KERNEL->SEMAFORO)
+                         desbloquear_acceso(&KERNEL->SEMAFORO);
                          despierta_conexion(&KERNEL->CXs[resul].barC);
                          fprintf(stderr,"\nDespertamos conexion\n");
                         break;
