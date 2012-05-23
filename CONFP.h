@@ -133,6 +133,7 @@ typedef struct _conexion {
 typedef struct _kernel_shm {
   interfaz_red_t i_red; // este campo debe ser el primero de esta estructura
   pid_t kernel_pid;
+  barrera_t barrera;
   //esto es mio
   int num_CXs;
   int indice_libre;

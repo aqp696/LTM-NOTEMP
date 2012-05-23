@@ -51,6 +51,7 @@ void bucle_principal(void) {
         INICIA_LISTA(KERNEL->CXs[i].TX,buf_pkt);
         INICIA_LISTA(KERNEL->CXs[i].RX,buf_pkt);
     }
+    inicia_barrera(&KERNEL->barrera);
 
     INICIA_LISTA(KERNEL->buffers_libres, buf_pkt);
     //Inicializamos la lista de conexiones libres
@@ -160,7 +161,8 @@ void bucle_principal(void) {
                          fprintf(stderr,"\nvamos a ejecutar despierta_conexion()");
                          fprintf(stderr,"\ndespertamos la conexion de indice: %d",resul);
                          desbloquear_acceso(&KERNEL->SEMAFORO);
-                         despierta_conexion(&KERNEL->CXs[resul].barC);
+                         //despierta_conexion(&KERNEL->CXs[resul].barC);
+                         despierta_conexion(&KERNEL->barrera);
                          fprintf(stderr,"\nDespertamos conexion\n");
                         break;
                     case ACK:

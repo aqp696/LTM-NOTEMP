@@ -183,7 +183,8 @@ int t_listen(t_direccion *tsap_escucha, t_direccion *tsap_remota) {
     //nos dormimos a la espera de conexion
     fprintf(stderr,"\ndormimos al listen de indice: %d\n",indice_celda);
     desbloquear_acceso(&KERNEL->SEMAFORO);
-    bloquea_llamada(&KERNEL->CXs[indice_celda].barC);
+    //bloquea_llamada(&KERNEL->CXs[indice_celda].barC);
+    bloquea_llamada(&KERNEL->barrera);
     fprintf(stderr,"\nNos despiertan, CONNECT recibido");
 
     bloquear_acceso(&KERNEL->SEMAFORO);
