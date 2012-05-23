@@ -158,6 +158,7 @@ void bucle_principal(void) {
                          fprintf(stderr,"\nEnviamos tpdu");
                          //despertamos al listen
                          fprintf(stderr,"\nvamos a ejecutar despierta_conexion()");
+                         fprintf(stderr,"\ndespertamos la conexion de indice: %d",resul);
                          despierta_conexion(&KERNEL->CXs[resul].barC);
                          fprintf(stderr,"\nDespertamos conexion\n");
                         break;

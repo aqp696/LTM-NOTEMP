@@ -111,7 +111,9 @@ void crear_pkt(tpdu *pkt,char tipo, t_direccion *tsap_destino,t_direccion *tsap_
     pkt->cabecera.id_local = id_local;
     pkt->cabecera.tamanho_datos=longitud;
     fprintf(stderr,"\nCopiamos los datos al pakete");
-    memcpy (pkt->datos,datos,longitud);
+   
+        memcpy (pkt->datos,datos,longitud);
+ 
 }
 
 int asign_conexion_CR(tpdu *puntero_pkt,kernel_shm_t *KERNEL) {
