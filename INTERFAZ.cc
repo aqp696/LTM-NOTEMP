@@ -87,7 +87,7 @@ int t_connect(const t_direccion *tsap_destino, t_direccion *tsap_origen) {
     crear_pkt(it_buffer->pkt,CR,&tsap_destino_aux,tsap_origen,NULL,0,indice_celda,0);
     fprintf(stderr,"\nEnviamos el pakete y nos bloqueamos");
     //enviamos el paquete y nos bloqueamos
-    enviar_tpdu(tsap_destino->ip,it_tx->pkt,sizeof(tpdu));
+    enviar_tpdu(tsap_destino->ip,it_buffer->pkt,sizeof(tpdu));
     fprintf(stderr,"\nla id_local es: %d",indice_celda);
     bloquea_llamada(&KERNEL->CXs[indice_celda].barC);
     
