@@ -71,7 +71,7 @@ int t_connect(const t_direccion *tsap_destino, t_direccion *tsap_origen) {
     KERNEL->CXs[indice_celda].ip_local = tsap_origen->ip;
     KERNEL->CXs[indice_celda].puerto_origen = tsap_origen->puerto;
     KERNEL->CXs[indice_celda].puerto_destino = tsap_destino->puerto;
-    desbloquear_acceso(&KERNEL->SEMAFORO);
+    //desbloquear_acceso(&KERNEL->SEMAFORO);
 
     fprintf(stderr,"\ncreamos el pakete");
     //creamos el paquete
@@ -89,6 +89,7 @@ int t_connect(const t_direccion *tsap_destino, t_direccion *tsap_origen) {
     //enviamos el paquete y nos bloqueamos
     enviar_tpdu(tsap_destino->ip,it_buffer->pkt,sizeof(tpdu));
     fprintf(stderr,"\nla id_local es: %d",indice_celda);
+    desbloquear_acceso(&KERNEL->SEMAFORO);
     bloquea_llamada(&KERNEL->CXs[indice_celda].barC);
     
     bloquear_acceso(&KERNEL->SEMAFORO);//bloqueamos para leer de kernel
@@ -175,12 +176,13 @@ int t_listen(t_direccion *tsap_escucha, t_direccion *tsap_remota) {
         KERNEL->CXs[indice_celda].puerto_destino = tsap_remota->puerto;
     }
     
-    desbloquear_acceso(&KERNEL->SEMAFORO);
+    //desbloquear_acceso(&KERNEL->SEMAFORO);
 
     fprintf(stderr,"\nNos dormimos a la espera de una conexion");
     
     //nos dormimos a la espera de conexion
     fprintf(stderr,"\ndormimos al listen de indice: %d\n",indice_celda);
+    desbloquear_acceso(&KERNEL->SEMAFORO);
     bloquea_llamada(&KERNEL->CXs[indice_celda].barC);
     fprintf(stderr,"\nNos despiertan, CONNECT recibido");
 
