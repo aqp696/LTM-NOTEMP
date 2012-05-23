@@ -47,13 +47,13 @@ void bucle_principal(void) {
         KERNEL->CXs[i].estado_cx = CLOSED;
         INICIA_LISTA(KERNEL->CXs[i].TX,buf_pkt);
         INICIA_LISTA(KERNEL->CXs[i].RX,buf_pkt);
-        INICIA_LISTA(KERNEL->CXs[i].buffers_libres,buf_pkt);
     }
-    desbloquear_acceso(&KERNEL->SEMAFORO);
 
+    INICIA_LISTA(KERNEL->buffers_libres, buf_pkt);
     //Inicializamos la lista de conexiones libres
-    INICIA_LISTA(KERNEL->CXs_libres,int);
+    INICIA_LISTA(KERNEL->CXs_libres, int);
     inicializar_CXs_libres();
+    desbloquear_acceso(&KERNEL->SEMAFORO);
 
     do {
 

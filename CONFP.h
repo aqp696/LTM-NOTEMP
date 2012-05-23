@@ -5,7 +5,8 @@
 #include "comunicacion.h"
 #include "ltmipcs.h"
 
-#include<list>
+#include <list>
+#include <stdbool.h>
 #include "ltmallocator.h"
 using namespace std;
 
@@ -13,6 +14,7 @@ using namespace std;
 #define CR 101
 #define CC 102
 #define DATOS 103
+#define ACK 104
 
 #define CLOSED 201
 #define LISTEN 202
@@ -20,6 +22,18 @@ using namespace std;
 #define ESTABLISHED 204
 
 #define DEPURA 0
+
+#define tiempo_rtx_pkt tiempo_actual()-KERNEL->t_inicio+200
+#define tiempo_rtx_red tiempo_actual() -KERNEL->t_inicio+1000
+#define tiempo_rtx_aplic tiempo_actual() -KERNEL->t_inicio+1000
+
+//ESTADOS DE ENVIO DE PKT
+#define no_confirmado 1
+#define confirmado 2
+
+#define vencimiento_pkt 300
+#define vencimiento_red 301
+#define vencimiento_aplic 302
 
 
 //const int CR = 101;
@@ -55,6 +69,8 @@ typedef struct _cab_tcp {
     struct in_addr ip_local;
     struct in_addr ip_destino;
     int conexion_aceptada;
+    int tamanho_datos;
+    int num_seq_ack;
     //..mas datos
 }cab_tcp;
 
@@ -63,11 +79,28 @@ typedef struct _tpdu{
     char datos[MAX_DATOS];
 }tpdu;
 
+typedef struct _buf_pkt buf_pkt;
+
+typedef struct _evento_t{
+    list<buf_pkt, shm_Allocator<buf_pkt> >::iterator it_pkt;//iterador a buffer
+    uint32_t timeout;
+    int indice_cx;
+    int tipo_tempo;
+}evento_t;
+
 typedef struct _buf_pkt {
     // nbytes
     // id. conexion
     // ...
-    // char contenedor[MAX_LONG_PKT];
+    char *ultimo_byte;//ultimo byte copiado del buffer
+    unsigned int bytes_restan;
+    int estado_pkt;//asentido o no
+    int contador_rtx;//para saber si se agotaron las rtx
+    int num_secuencia;
+    list<evento_t,shm_Allocator<evento_t> >::iterator it_tout_pkt;//iterador a evento_t
+    tpdu *pkt;
+    
+    char contenedor[MAX_LONG_PKT];
 } buf_pkt;
 
 typedef struct _conexion {
@@ -80,16 +113,19 @@ typedef struct _conexion {
   int estado_cx;
   int resultado_peticion;
   int id_destino;
+  int ultimo_ack;
   struct in_addr ip_destino;
   struct in_addr ip_local;
+  
+  bool primitiva_dormida;
+  int resultado_primitiva;//aki es donde ponemos si fue un EXNET,OK ...
   // semaforo?
   // lista de paquetes/buf. pendientes de asentimiento
   // lista de paquetes/buf. recibidos
   // ...
-
+  
   list<buf_pkt, shm_Allocator<buf_pkt> >TX; //bufferes de transmision
   list<buf_pkt, shm_Allocator<buf_pkt> >RX; //bufferes de recepcion
-  list<buf_pkt, shm_Allocator<buf_pkt> >buffers_libres;
   
 } conexion_t;
 
@@ -100,12 +136,14 @@ typedef struct _kernel_shm {
   int num_CXs;
   int indice_libre;
   semaforo_t SEMAFORO;
+  uint32_t t_inicio;
+  list<evento_t, shm_Allocator<evento_t> >::iterator it_tipo_vencimiento;
+  list<buf_pkt, shm_Allocator<buf_pkt> >buffers_libres;
+  list<int, shm_Allocator<int> >CXs_libres;
   // semaforo
   // lista temporizadores
   // lista de buf. libres
   // ...
-
-  list<int,shm_Allocator<int> >CXs_libres;
 
   conexion_t CXs[NUM_MAX_CXs];
 } kernel_shm_t;
@@ -124,5 +162,6 @@ int asign_conexion_CR(tpdu *,kernel_shm_t *);
 void inicializar_CXs_libres();
 int buscar_connect_repetido(t_direccion *tsap_origen,const t_direccion *tsap_destino);
 int buscar_listen_repetido(t_direccion *tsap_escucha, t_direccion *tsap_remota);
+list<buf_pkt>::iterator buscar_buffer_libre();
 
 #endif /* _CONFP_H */
