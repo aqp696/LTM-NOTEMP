@@ -221,15 +221,104 @@ int t_disconnect(int id) {
 }
 
 size_t t_send(int id, const void *datos, size_t longitud, int8_t *flags) {
-    int res = EXOK;
+    int tamanho = MAX_DATOS; //inicializamos tamanho al máximo
+    //int res = EXOK;
+    
+    //obtenemos el kernel
     int er = ltm_get_kernel(dir_proto, (void**) & KERNEL);  
     if (er < 0)
         return EXKERNEL;
+    
+    char *puntero_datos = (char *)datos;
 
+    //miramos si hay datos disponibles
+    if(datos == NULL){
+        ltm_exit_kernel((void**)&KERNEL);
+        return EXNODATA;
+    }
+    
+    //miramos si existe la conexion establecida
+    bloquear_acceso(&KERNEL->SEMAFORO);
+    if(KERNEL->CXs[id].estado_cx != ESTABLISHED){
+        desbloquear_acceso(&KERNEL->SEMAFORO);
+        ltm_exit_kernel((void**)&KERNEL);
+        return EXBADTID;
+    }
+    
+    //miramos cuantos sends hacen falta
+    int numero_sends;
+    if(longitud <= MAX_DATOS){
+        tamanho = longitud;
+        numero_sends = 1;
+    }else{
+        tamanho = MAX_DATOS;
+        numero_sends = longitud/MAX_DATOS;
+        if(longitud%MAX_DATOS > 0){
+            numero_sends += 1;
+        }
+    }
+    //comenzamos la numeracion
+    int numero_secuencia = 0;
+    int datos_a_transmitir = longitud;
+    int datos_enviados = 0;
+    
+    //rellenamos datos de los tsaps
+    t_direccion tsap_destino, tsap_origen;
+    tsap_origen.ip.s_addr = KERNEL->CXs[id].ip_local.s_addr;
+    tsap_origen.puerto = KERNEL->CXs[id].puerto_origen;
+    tsap_destino.ip.s_addr = KERNEL->CXs[id].ip_destino.s_addr;
+    tsap_destino.puerto = KERNEL->CXs[id].puerto_destino;
+    
+    //definimos iteradores
+    list<buf_pkt>:: iterator it_libres;
+    list<buf_pkt>::iterator it_tx;
+    
+    //mientras queden datos por transmitir ... ENVIAMOS
+    while(numero_sends > 0){
+        //miramos si tenemos espacio en buffer de TX
+        if((KERNEL->CXs[id].TX.size() < KERNEL->NUM_BUF_PKTS)){
+            //buscamos un buffer_libre
+            it_libres = buscar_buffer_libre();
+            memcpy(it_libres->pkt->datos,puntero_datos,tamanho);
+            puntero_datos = puntero_datos + tamanho;
+            it_tx = KERNEL->CXs[id].TX.end();
+            KERNEL->CXs[id].TX.splice(it_tx,KERNEL->buffers_libres,it_libres);
+            it_tx = --KERNEL->CXs[id].TX.end();
+            //creamos el pakete y lo enviamos
+            crear_pkt(it_tx->pkt,DATOS,&tsap_destino,&tsap_origen,it_tx->pkt->datos,tamanho,id,KERNEL->CXs[id].id_destino);
+            enviar_tpdu(tsap_destino.ip,it_tx->pkt,sizeof(tpdu));
+            it_tx->estado_pkt = no_confirmado;
+            it_tx->contador_rtx = NUM_MAX_RTx;
+            it_tx->num_secuencia = numero_secuencia;
+            numero_secuencia++;
+            numero_sends--;
+            datos_a_transmitir-=tamanho;//tamanho vale MAX_DATOS
+            datos_enviados+=tamanho;
+            if(numero_sends == 1){
+                //ULTIMO PKT-> actualizamos tamanho
+                tamanho = datos_a_transmitir;
+            }
+        }else{//si no me duermo
+            KERNEL->CXs[id].primitiva_dormida = true;
+            desbloquear_acceso(&KERNEL->SEMAFORO);
+            bloquea_llamada(&KERNEL->CXs[id].barC);
+            bloquear_acceso(&KERNEL->SEMAFORO);
+            KERNEL->CXs[id].primitiva_dormida = false;
+            
+            if(KERNEL->CXs[id].resultado_primitiva == EXNET){
+                desbloquear_acceso(&KERNEL->SEMAFORO);
+                ltm_exit_kernel((void**)&KERNEL);
+                return EXNET;
+            }
+        }
+    }
+    
+    desbloquear_acceso(&KERNEL->SEMAFORO);
+    
     // ..... aqui vuestro codigo
 
     ltm_exit_kernel((void**) & KERNEL);
-    return res;
+    return datos_enviados;
 }
 
 size_t t_receive(int id, void *datos, size_t longitud, int8_t *flags) {

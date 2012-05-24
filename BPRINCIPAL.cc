@@ -110,6 +110,10 @@ void bucle_principal(void) {
                             KERNEL->CXs[puntero_pkt->cabecera.id_destino].estado_cx = ESTABLISHED;
                             KERNEL->CXs[puntero_pkt->cabecera.id_destino].id_destino = puntero_pkt->cabecera.id_local;
                             KERNEL->CXs[puntero_pkt->cabecera.id_destino].resultado_peticion=EXOK;
+                            //kitamos del buffer de TX el pkt CR
+                            it_libres = KERNEL->buffers_libres.end();
+                            it_tx = --KERNEL->CXs[puntero_pkt->cabecera.id_destino].TX.end();
+                            KERNEL->buffers_libres.splice(it_libres,KERNEL->CXs[puntero_pkt->cabecera.id_destino].TX,it_tx);
                         }
                         desbloquear_acceso(&KERNEL->SEMAFORO);
                         fprintf(stderr,"\nid_estino es: %d",puntero_pkt->cabecera.id_local);
@@ -149,15 +153,15 @@ void bucle_principal(void) {
                         //rellenamos los datos
                         it_libres->contador_rtx = NUM_MAX_RTx;
                         
-                        it_tx = KERNEL->CXs[resul].TX.end();
-                        KERNEL->CXs[resul].TX.splice(it_tx,KERNEL->buffers_libres,it_libres);
-                        it_tx = --KERNEL->CXs[resul].TX.end();
+                        //it_tx = KERNEL->CXs[resul].TX.end();
+                        //KERNEL->CXs[resul].TX.splice(it_tx,KERNEL->buffers_libres,it_libres);
+                        //it_tx = --KERNEL->CXs[resul].TX.end();
                         
                         //creamos paquete CC
                         fprintf(stderr,"\nCreamos pakete");
-                         crear_pkt(it_tx->pkt,CC,&tsap_destino,&tsap_origen,NULL,0,resul,puntero_pkt->cabecera.id_local);
+                         crear_pkt(it_libres->pkt,CC,&tsap_destino,&tsap_origen,NULL,0,resul,puntero_pkt->cabecera.id_local);
                          fprintf(stderr,"\nEnviamos pakete");
-                         enviar_tpdu(ip_remota,it_tx->pkt,sizeof(tpdu));
+                         enviar_tpdu(ip_remota,it_libres->pkt,sizeof(tpdu));
                          fprintf(stderr,"\nEnviamos tpdu");
                          //despertamos al listen
                          fprintf(stderr,"\nvamos a ejecutar despierta_conexion()");
