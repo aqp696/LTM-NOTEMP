@@ -45,9 +45,10 @@ void bucle_principal(void) {
     int i;
     //inicializamos cada conexion
     for(i=0;i<NUM_MAX_CXs;i++){
-        fprintf(stderr,"\ninicializo barrera: ",i);
-        inicia_barrera(&KERNEL->CXs[i].barC);
         memset(&KERNEL->CXs[i],0,sizeof(conexion_t));
+        fprintf(stderr,"\ninicializo barrera: %d",i);
+        inicia_barrera(&KERNEL->CXs[i].barC);
+        
         KERNEL->CXs[i].estado_cx = CLOSED;
         INICIA_LISTA(KERNEL->CXs[i].TX,buf_pkt);
         INICIA_LISTA(KERNEL->CXs[i].RX,buf_pkt);
