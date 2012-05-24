@@ -45,7 +45,7 @@ void bucle_principal(void) {
     int i;
     //inicializamos cada conexion
     for(i=0;i<NUM_MAX_CXs;i++){
-        memset(&KERNEL->CXs[i],0,sizeof(conexion_t));
+        //memset(&KERNEL->CXs[i],0,sizeof(conexion_t));
         fprintf(stderr,"\ninicializo barrera: %d",i);
         inicia_barrera(&KERNEL->CXs[i].barC);
         
