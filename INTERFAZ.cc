@@ -81,7 +81,10 @@ int t_connect(const t_direccion *tsap_destino, t_direccion *tsap_origen) {
     it_tx = KERNEL->CXs[indice_celda].TX.end();
     KERNEL->CXs[indice_celda].TX.splice(it_tx,KERNEL->buffers_libres,it_buffer);
     fprintf(stderr,"\nya hicimos el splice");
-    it_tx = KERNEL->CXs[indice_celda].TX.end();
+    it_tx = --KERNEL->CXs[indice_celda].TX.end();//"--" se hace para que apunte al ultimo elemento, y no al vacio
+    fprintf(stderr,"\nit_tx->contador_rtx: %d",it_tx->contador_rtx);
+    fprintf(stderr,"\nit_buffer->contador_rtx: %d",it_buffer->contador_rtx);
+
     memcpy(&tsap_destino_aux,tsap_destino,sizeof(t_direccion));
     fprintf(stderr,"\nvamos a llamar a crear_pkt");
     crear_pkt(it_tx->pkt,CR,&tsap_destino_aux,tsap_origen,NULL,0,indice_celda,0);

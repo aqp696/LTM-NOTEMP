@@ -149,15 +149,15 @@ void bucle_principal(void) {
                         //rellenamos los datos
                         it_libres->contador_rtx = NUM_MAX_RTx;
                         
-                        //it_tx = KERNEL->CXs[resul].TX.end();
-                        //KERNEL->CXs[resul].TX.splice(it_tx,KERNEL->buffers_libres,it_libres);
-                        //it_tx = KERNEL->CXs[resul].TX.end();
+                        it_tx = KERNEL->CXs[resul].TX.end();
+                        KERNEL->CXs[resul].TX.splice(it_tx,KERNEL->buffers_libres,it_libres);
+                        it_tx = --KERNEL->CXs[resul].TX.end();
                         
                         //creamos paquete CC
                         fprintf(stderr,"\nCreamos pakete");
-                         crear_pkt(it_libres->pkt,CC,&tsap_destino,&tsap_origen,NULL,0,resul,puntero_pkt->cabecera.id_local);
+                         crear_pkt(it_tx->pkt,CC,&tsap_destino,&tsap_origen,NULL,0,resul,puntero_pkt->cabecera.id_local);
                          fprintf(stderr,"\nEnviamos pakete");
-                         enviar_tpdu(ip_remota,it_libres->pkt,sizeof(tpdu));
+                         enviar_tpdu(ip_remota,it_tx->pkt,sizeof(tpdu));
                          fprintf(stderr,"\nEnviamos tpdu");
                          //despertamos al listen
                          fprintf(stderr,"\nvamos a ejecutar despierta_conexion()");
