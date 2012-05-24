@@ -84,10 +84,10 @@ int t_connect(const t_direccion *tsap_destino, t_direccion *tsap_origen) {
     it_tx = KERNEL->CXs[indice_celda].TX.end();
     memcpy(&tsap_destino_aux,tsap_destino,sizeof(t_direccion));
     fprintf(stderr,"\nvamos a llamar a crear_pkt");
-    crear_pkt(it_buffer->pkt,CR,&tsap_destino_aux,tsap_origen,NULL,0,indice_celda,0);
+    crear_pkt(it_tx->pkt,CR,&tsap_destino_aux,tsap_origen,NULL,0,indice_celda,0);
     fprintf(stderr,"\nEnviamos el pakete y nos bloqueamos");
     //enviamos el paquete y nos bloqueamos
-    enviar_tpdu(tsap_destino->ip,it_buffer->pkt,sizeof(tpdu));
+    enviar_tpdu(tsap_destino->ip,it_tx->pkt,sizeof(tpdu));
     fprintf(stderr,"\nla id_local es: %d",indice_celda);
     desbloquear_acceso(&KERNEL->SEMAFORO);
     bloquea_llamada(&KERNEL->CXs[indice_celda].barC);
