@@ -321,11 +321,60 @@ size_t t_send(int id, const void *datos, size_t longitud, int8_t *flags) {
 }
 
 size_t t_receive(int id, void *datos, size_t longitud, int8_t *flags) {
+    char *datos_aux =(char *) datos;
     int res = EXOK;
+    //obtenemos el KERNEL
     int er = ltm_get_kernel(dir_proto, (void**) & KERNEL);
     if (er < 0)
         return EXKERNEL;
 
+    //miramos si hay datos disponibles
+    if((datos == NULL)||(longitud < 0)){
+        ltm_exit_kernel((void**)&KERNEL);
+        return EXINVA;
+    }
+    
+    //miramos si existe la conexion establecida
+    bloquear_acceso(&KERNEL->SEMAFORO);
+    if(KERNEL->CXs[id].estado_cx != ESTABLISHED){
+        desbloquear_acceso(&KERNEL->SEMAFORO);
+        ltm_exit_kernel((void**)&KERNEL);
+        return EXBADTID;
+    }
+    
+    //rellenamos los TSAPs
+    t_direccion tsap_destino, tsap_origen;
+    tsap_origen.ip.s_addr = KERNEL->CXs[id].ip_local.s_addr;
+    tsap_origen.puerto = KERNEL->CXs[id].puerto_origen;
+    tsap_destino.ip.s_addr = KERNEL->CXs[id].ip_destino.s_addr;
+    tsap_destino.puerto = KERNEL->CXs[id].puerto_destino;
+    
+    int num_recvs = longitud/MAX_DATOS;
+    int datos_recibidos = 0;
+    if(longitud%MAX_DATOS > 0){
+        num_recvs += 1;
+    }
+    
+    //definimos iteradores
+    list<buf_pkt>:: iterator it_libres;
+    list<buf_pkt>::iterator it_rx;
+    
+    unsigned int indice;
+    
+    //nos disponemos a recibir
+    while(num_recvs > 0){
+        if(!(KERNEL->CXs[id].RX.empty())){//si hay datos en buffer RX ...
+            for(indice=0; indice < KERNEL->CXs[id].RX.size();indice++){
+                it_rx = KERNEL->CXs[id].RX.begin();
+                //...LO DEJAMOS PRIMERO HACER CASE DATOS
+            }
+        }else{//si no hay datos en buffer RX-> DORMIRSE
+            KERNEL->CXs[id].primitiva_dormida = true;
+            desbloquear_acceso(&KERNEL->SEMAFORO);
+            bloquea_llamada(&KERNEL->CXs[id].barC);
+            bloquear_acceso(&KERNEL->SEMAFORO);
+        }
+    }
     // ..... aqui vuestro codigo
 
     ltm_exit_kernel((void**) & KERNEL);

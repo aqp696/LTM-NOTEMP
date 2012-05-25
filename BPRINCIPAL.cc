@@ -93,6 +93,7 @@ void bucle_principal(void) {
                 list<buf_pkt>::iterator it_buffer;
                 list<buf_pkt>::iterator it_libres;
                 list<buf_pkt>::iterator it_tx;
+                list<buf_pkt>::iterator it_rx;
                 int resul;
                 
                 switch(puntero_pkt->cabecera.tipo){
@@ -148,9 +149,9 @@ void bucle_principal(void) {
                         fprintf(stderr,"\nid_local es: %d",puntero_pkt->cabecera.id_destino);
                         //desbloquear_acceso(&KERNEL->SEMAFORO);
                         //completamos tsap_origen y tsap_destino
-                        tsap_origen.ip = KERNEL->CXs[resul].ip_local;
+                        tsap_origen.ip.s_addr = KERNEL->CXs[resul].ip_local.s_addr;
                         tsap_origen.puerto = puntero_pkt->cabecera.puerto_dest;
-                        tsap_destino.ip = ip_remota;
+                        tsap_destino.ip.s_addr = ip_remota.s_addr;
                         tsap_destino.puerto = puntero_pkt->cabecera.puerto_orig;
                         
                         //it_libres = buscar_buffer_libre();
@@ -197,17 +198,22 @@ void bucle_principal(void) {
                             }        
                         }
                         break;
+                    case DATOS:
+                        //miramos si hay sitio en buffer RX
+                        if((int)KERNEL->CXs[puntero_pkt->cabecera.id_destino].RX.size() < NUM_BUF_PKTS){
+                            //miramos si es el num_seq esperado
+                            if(puntero_pkt->cabecera.num_seq_ack == KERNEL->CXs[puntero_pkt->cabecera.id_destino].numero_secuencia){
+                                it_libres = buscar_buffer_libre();
+                                it_libres->bytes_restan = puntero_pkt->cabecera.tamanho_datos;
+                                it_libres->ultimo_byte = it_libres->pkt->datos;
+                                memcpy(it_libres->contenedor,puntero_pkt,sizeof(tpdu));
+                                it_rx = KERNEL->CXs[puntero_pkt->cabecera.id_destino].RX.end();
+                                KERNEL->CXs[puntero_pkt->cabecera.id_destino].RX.splice(it_rx,KERNEL->buffers_libres,it_libres);
+                            }
+                        }
+                        break;
 
                 }
-
-
-//                if (++cont == 1)
-//                    despierta_conexion(&KERNEL->CXs[0].barC);
-//
-//                sleep(3);
-//
-//                snprintf(pkt, sizeof(pkt), "saludos desde protocolo %d\n", KERNEL->kernel_pid);
-//                enviar_tpdu(ip_remota, pkt, 700);
                 
                 break;
         }
