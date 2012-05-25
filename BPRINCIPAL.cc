@@ -114,6 +114,8 @@ void bucle_principal(void) {
                             it_libres = KERNEL->buffers_libres.end();
                             it_tx = --KERNEL->CXs[puntero_pkt->cabecera.id_destino].TX.end();
                             KERNEL->buffers_libres.splice(it_libres,KERNEL->CXs[puntero_pkt->cabecera.id_destino].TX,it_tx);
+                            //iniciamos el numero de secuencia para esta conexion
+                            KERNEL->CXs[puntero_pkt->cabecera.id_destino].numero_secuencia = 0;
                         }
                         desbloquear_acceso(&KERNEL->SEMAFORO);
                         fprintf(stderr,"\nid_estino es: %d",puntero_pkt->cabecera.id_local);
@@ -139,6 +141,8 @@ void bucle_principal(void) {
                             KERNEL->CXs[resul].puerto_destino = puntero_pkt->cabecera.puerto_orig;
                             KERNEL->CXs[resul].ip_destino = ip_remota;
                             KERNEL->CXs[resul].id_destino = puntero_pkt->cabecera.id_local;
+                           //iniciamos el numero de secuencia para esta conexion
+                            KERNEL->CXs[resul].numero_secuencia = 0;
                         }
                         fprintf(stderr,"\nid_destino es: %d",puntero_pkt->cabecera.id_local);
                         fprintf(stderr,"\nid_local es: %d",puntero_pkt->cabecera.id_destino);

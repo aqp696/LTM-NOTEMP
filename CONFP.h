@@ -115,6 +115,7 @@ typedef struct _conexion {
   int resultado_peticion;
   int id_destino;
   int ultimo_ack;
+  int numero_secuencia;
   struct in_addr ip_destino;
   struct in_addr ip_local;
   

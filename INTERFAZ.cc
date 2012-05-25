@@ -258,7 +258,6 @@ size_t t_send(int id, const void *datos, size_t longitud, int8_t *flags) {
         }
     }
     //comenzamos la numeracion
-    int numero_secuencia = 0;
     int datos_a_transmitir = longitud;
     int datos_enviados = 0;
     
@@ -289,8 +288,8 @@ size_t t_send(int id, const void *datos, size_t longitud, int8_t *flags) {
             enviar_tpdu(tsap_destino.ip,it_tx->pkt,sizeof(tpdu));
             it_tx->estado_pkt = no_confirmado;
             it_tx->contador_rtx = NUM_MAX_RTx;
-            it_tx->num_secuencia = numero_secuencia;
-            numero_secuencia++;
+            it_tx->num_secuencia = KERNEL->CXs[id].numero_secuencia;
+            KERNEL->CXs[id].numero_secuencia++;
             numero_sends--;
             datos_a_transmitir-=tamanho;//tamanho vale MAX_DATOS
             datos_enviados+=tamanho;
