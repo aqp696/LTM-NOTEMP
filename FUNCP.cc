@@ -110,6 +110,7 @@ void crear_pkt(tpdu *pkt,char tipo, t_direccion *tsap_destino,t_direccion *tsap_
     pkt->cabecera.id_destino = id_destino;
     pkt->cabecera.id_local = id_local;
     pkt->cabecera.tamanho_datos=longitud;
+    pkt->cabecera.numero_secuencia = KERNEL->CXs[id_local].numero_secuencia;
     fprintf(stderr,"\nCopiamos los datos al pakete");
    
         memcpy (pkt->datos,datos,longitud);

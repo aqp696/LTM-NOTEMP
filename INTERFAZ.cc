@@ -322,7 +322,6 @@ size_t t_send(int id, const void *datos, size_t longitud, int8_t *flags) {
 
 size_t t_receive(int id, void *datos, size_t longitud, int8_t *flags) {
     char *datos_aux =(char *) datos;
-    int res = EXOK;
     //obtenemos el KERNEL
     int er = ltm_get_kernel(dir_proto, (void**) & KERNEL);
     if (er < 0)
@@ -342,13 +341,7 @@ size_t t_receive(int id, void *datos, size_t longitud, int8_t *flags) {
         return EXBADTID;
     }
     
-    //rellenamos los TSAPs
-    t_direccion tsap_destino, tsap_origen;
-    tsap_origen.ip.s_addr = KERNEL->CXs[id].ip_local.s_addr;
-    tsap_origen.puerto = KERNEL->CXs[id].puerto_origen;
-    tsap_destino.ip.s_addr = KERNEL->CXs[id].ip_destino.s_addr;
-    tsap_destino.puerto = KERNEL->CXs[id].puerto_destino;
-    
+    //datos internos para el control del bucle y variable del return
     int num_recvs = longitud/MAX_DATOS;
     int datos_recibidos = 0;
     if(longitud%MAX_DATOS > 0){
@@ -360,13 +353,32 @@ size_t t_receive(int id, void *datos, size_t longitud, int8_t *flags) {
     list<buf_pkt>::iterator it_rx;
     
     unsigned int indice;
+    unsigned int num_buf_rx;
     
     //nos disponemos a recibir
     while(num_recvs > 0){
         if(!(KERNEL->CXs[id].RX.empty())){//si hay datos en buffer RX ...
-            for(indice=0; indice < KERNEL->CXs[id].RX.size();indice++){
+            num_buf_rx = KERNEL->CXs[id].RX.size();//lo hacemos porque si no variaria el size al hacer un splice
+            for(indice=0; indice < num_buf_rx;indice++){
                 it_rx = KERNEL->CXs[id].RX.begin();
-                //...LO DEJAMOS PRIMERO HACER CASE DATOS
+                it_libres = KERNEL->buffers_libres.begin();
+                //si de este buffer no quedan bytes lo pasamos a libres
+                if(it_rx->bytes_restan == 0){
+                    KERNEL->buffers_libres.splice(it_libres,KERNEL->CXs[id].RX,it_rx);
+                }else {//si no copiamos
+                    if (it_rx->bytes_restan > longitud) { //leemos lo que podamos del buffer de rx
+                        memcpy(datos_aux, it_rx->ultimo_byte, longitud);
+                        it_rx->bytes_restan -= longitud;
+                        it_rx->ultimo_byte+=longitud+1;
+                        datos_aux+=longitud;
+                        datos_recibidos += longitud;
+                    }else{//leemos todo el buffer de rx
+                        memcpy(datos_aux, it_rx->ultimo_byte, it_rx->bytes_restan);
+                        it_rx->bytes_restan-=it_rx->bytes_restan;
+                        it_rx->ultimo_byte+=it_rx->bytes_restan;
+                        datos_recibidos += it_rx->bytes_restan;
+                    }
+                }
             }
         }else{//si no hay datos en buffer RX-> DORMIRSE
             KERNEL->CXs[id].primitiva_dormida = true;
@@ -378,5 +390,5 @@ size_t t_receive(int id, void *datos, size_t longitud, int8_t *flags) {
     // ..... aqui vuestro codigo
 
     ltm_exit_kernel((void**) & KERNEL);
-    return res;
+    return datos_recibidos;
 }
