@@ -26,7 +26,7 @@ void bucle_principal(void) {
     struct in_addr ip_remota;
     char ipcharbuf[20];
     
-    
+        
     //datos mios
     char pkt[MAX_LONG_PKT];
     tpdu *puntero_pkt;
@@ -179,6 +179,23 @@ void bucle_principal(void) {
                          fprintf(stderr,"\nDespertamos conexion\n");
                         break;
                     case ACK:
+                        fprintf(stderr,"\nRecibido un ACK");
+                        it_tx = KERNEL->CXs[puntero_pkt->cabecera.id_destino].TX.begin();//apunta al principio de TX
+                        //LIBERAMOS TODOS LOS PAKETES ASENTIDOS
+                        for(i=0;(uint)i < KERNEL->CXs[puntero_pkt->cabecera.id_destino].TX.size();i++){
+                            //miramos a que buffer de TX asiente y pasamos a buffer libres
+                            if(puntero_pkt->cabecera.num_seq_ack >= it_tx->num_secuencia){
+                                it_tx->estado_pkt = confirmado;
+                                it_libres = KERNEL->buffers_libres.begin();
+                                KERNEL->buffers_libres.splice(it_libres,KERNEL->CXs[puntero_pkt->cabecera.id_destino].TX,it_tx);
+                                it_tx++;//avanzamos el iterador al siguiente buffer de TX
+                                //si hay HUECO en buffer TX llamamos a la primitiva
+                                if(KERNEL->CXs[puntero_pkt->cabecera.id_destino].primitiva_dormida == true){
+                                    desbloquear_acceso(&KERNEL->SEMAFORO);
+                                    despierta_conexion(&KERNEL->CXs[puntero_pkt->cabecera.id_destino].barC);
+                                }
+                            }        
+                        }
                         break;
 
                 }
