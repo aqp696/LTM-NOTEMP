@@ -185,7 +185,7 @@ void bucle_principal(void) {
                         //LIBERAMOS TODOS LOS PAKETES ASENTIDOS
                         for(i=0;(uint)i < KERNEL->CXs[puntero_pkt->cabecera.id_destino].TX.size();i++){
                             //miramos a que buffer de TX asiente y pasamos a buffer libres
-                            if(puntero_pkt->cabecera.num_seq_ack >= it_tx->num_secuencia){
+                            if(puntero_pkt->cabecera.numero_secuencia >= it_tx->num_secuencia){
                                 it_tx->estado_pkt = confirmado;
                                 it_libres = KERNEL->buffers_libres.begin();
                                 KERNEL->buffers_libres.splice(it_libres,KERNEL->CXs[puntero_pkt->cabecera.id_destino].TX,it_tx);
@@ -202,13 +202,25 @@ void bucle_principal(void) {
                         //miramos si hay sitio en buffer RX
                         if((int)KERNEL->CXs[puntero_pkt->cabecera.id_destino].RX.size() < NUM_BUF_PKTS){
                             //miramos si es el num_seq esperado
-                            if(puntero_pkt->cabecera.num_seq_ack == KERNEL->CXs[puntero_pkt->cabecera.id_destino].numero_secuencia){
+                            if(puntero_pkt->cabecera.numero_secuencia == KERNEL->CXs[puntero_pkt->cabecera.id_destino].numero_secuencia){
                                 it_libres = buscar_buffer_libre();
                                 it_libres->bytes_restan = puntero_pkt->cabecera.tamanho_datos;
                                 it_libres->ultimo_byte = it_libres->pkt->datos;
                                 memcpy(it_libres->contenedor,puntero_pkt,sizeof(tpdu));
                                 it_rx = KERNEL->CXs[puntero_pkt->cabecera.id_destino].RX.end();
                                 KERNEL->CXs[puntero_pkt->cabecera.id_destino].RX.splice(it_rx,KERNEL->buffers_libres,it_libres);
+                                //rellenamos datos de los TSAPs
+                                t_direccion tsap_origen, tsap_destino;
+                                tsap_origen.ip.s_addr = KERNEL->CXs[puntero_pkt->cabecera.id_destino].ip_local.s_addr;
+                                tsap_origen.puerto = puntero_pkt->cabecera.puerto_dest;
+                                tsap_destino.ip.s_addr = ip_remota.s_addr;
+                                tsap_destino.puerto = puntero_pkt->cabecera.puerto_orig;
+                                
+                                //construimos el ACK y enviamos
+                                it_libres = buscar_buffer_libre();
+                                crear_pkt(it_libres->pkt,ACK,&tsap_destino,&tsap_origen,NULL,0,puntero_pkt->cabecera.id_destino,puntero_pkt->cabecera.id_local);
+                                KERNEL->CXs[puntero_pkt->cabecera.id_destino].numero_secuencia++;//incrementamos numero_secuencia
+                                enviar_tpdu(ip_remota,it_libres->pkt,sizeof(tpdu));
                             }
                         }
                         break;

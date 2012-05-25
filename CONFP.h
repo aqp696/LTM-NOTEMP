@@ -71,7 +71,7 @@ typedef struct _cab_tcp {
     struct in_addr ip_destino;
     int conexion_aceptada;
     int tamanho_datos;
-    int num_seq_ack;
+    int numero_secuencia;
     //..mas datos
 }cab_tcp;
 
