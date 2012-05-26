@@ -109,6 +109,7 @@ typedef struct _conexion {
   int id_destino;
   int ultimo_ack;
   int numero_secuencia;
+  bool signal_disconnect;// señal del disconnect, para avisar de que terminemos el flujo
   struct in_addr ip_destino;
   struct in_addr ip_local;
   

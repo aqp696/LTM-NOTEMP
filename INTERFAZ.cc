@@ -209,15 +209,51 @@ int t_listen(t_direccion *tsap_escucha, t_direccion *tsap_remota) {
 
 
 int t_disconnect(int id) {
-    int res = EXOK;
+    list<buf_pkt>::iterator it_libre;
+    list<buf_pkt>::iterator it_tx;
+    
+    //obtenemos el KERNEL
     int er = ltm_get_kernel(dir_proto, (void**) & KERNEL);
     if (er < 0)
         return EXKERNEL;
+    
+    //miramos si la cx existe en la tabla
+    bloquear_acceso(&KERNEL->SEMAFORO);
+    if(KERNEL->CXs[id].estado_cx == CLOSED){
+        desbloquear_acceso(&KERNEL->SEMAFORO);
+        ltm_exit_kernel((void**)&KERNEL);
+        return EXBADTID;
+    }
 
+    //rellenamos datos de los TSAPs
+    t_direccion tsap_destino, tsap_origen;
+    tsap_origen.ip.s_addr = KERNEL->CXs[id].ip_local.s_addr;
+    tsap_origen.puerto = KERNEL->CXs[id].puerto_origen;
+    tsap_destino.ip.s_addr = KERNEL->CXs[id].ip_destino.s_addr;
+    tsap_destino.puerto = KERNEL->CXs[id].puerto_destino;
+    
+    //creamos paquete DR y enviamos
+    if (KERNEL->CXs[id].TX.size() == 0) {//miramos si no hay paquetes pendientes de ACK
+        it_libre = buscar_buffer_libre();
+        it_tx = KERNEL->CXs[id].TX.end();
+        KERNEL->CXs[id].TX.splice(it_tx, KERNEL->buffers_libres, it_libre);
+        crear_pkt(it_tx->pkt, DR, &tsap_destino, &tsap_origen, NULL, 0, id, KERNEL->CXs[id].id_destino);
+        enviar_tpdu(tsap_destino.ip, it_tx->pkt, sizeof (tpdu));
+
+        //desbloqueamos KERNEL y nos bloqueamos
+        KERNEL->CXs[id].primitiva_dormida = true;
+        desbloquear_acceso(&KERNEL->SEMAFORO);
+        bloquea_llamada(&KERNEL->CXs[id].barC);
+        bloquear_acceso(&KERNEL->SEMAFORO);
+        KERNEL->CXs[id].primitiva_dormida = false;
+    }else{//si no, avisamos al KERNEL de que estamos cerrando
+        KERNEL->CXs[id].signal_disconnect = true;
+    }
+    
     // ..... aqui vuestro codigo
-
+    desbloquear_acceso(&KERNEL->SEMAFORO);
     ltm_exit_kernel((void**) & KERNEL);
-    return res;
+    return EXOK;
 }
 
 size_t t_send(int id, const void *datos, size_t longitud, int8_t *flags) {
@@ -385,6 +421,7 @@ size_t t_receive(int id, void *datos, size_t longitud, int8_t *flags) {
             desbloquear_acceso(&KERNEL->SEMAFORO);
             bloquea_llamada(&KERNEL->CXs[id].barC);
             bloquear_acceso(&KERNEL->SEMAFORO);
+            KERNEL->CXs[id].primitiva_dormida = false;
         }
     }
     // ..... aqui vuestro codigo

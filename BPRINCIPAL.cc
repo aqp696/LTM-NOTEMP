@@ -50,6 +50,7 @@ void bucle_principal(void) {
         inicia_barrera(&KERNEL->CXs[i].barC);
         
         KERNEL->CXs[i].estado_cx = CLOSED;
+        KERNEL->CXs[i].signal_disconnect = false;
         INICIA_LISTA(KERNEL->CXs[i].TX,buf_pkt);
         INICIA_LISTA(KERNEL->CXs[i].RX,buf_pkt);
     }
