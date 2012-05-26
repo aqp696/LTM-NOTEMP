@@ -15,7 +15,9 @@ using namespace std;
 #define CC 102
 #define DATOS 103
 #define ACK 104
+#define DR 105
 
+//ESTADOS DE LA CONEXION
 #define CLOSED 201
 #define LISTEN 202
 #define CONNECT 203
@@ -23,6 +25,7 @@ using namespace std;
 
 #define DEPURA 0
 
+//CALCULO DE VENCIMIENTO TEMPORIZADORES
 #define tiempo_rtx_pkt tiempo_actual()-KERNEL->t_inicio+200
 #define tiempo_rtx_red tiempo_actual() -KERNEL->t_inicio+1000
 #define tiempo_rtx_aplic tiempo_actual() -KERNEL->t_inicio+1000
@@ -32,20 +35,10 @@ using namespace std;
 #define no_confirmado 1
 #define confirmado 2
 
+//TIPOS DE VENCIMIENTO DE PKT
 #define vencimiento_pkt 300
 #define vencimiento_red 301
 #define vencimiento_aplic 302
-
-
-//const int CR = 101;
-//const int CC = 102;
-//
-////DEFINICION DE ESTADOS DE CONEXION
-//const int CLOSED = 201;
-//const int LISTEN = 202;
-//const int CONNECT = 203;
-//const int ESTABLISHED = 204;
-
 
 // INICIACION DE UNA LISTA EN LA ZONA DE MEMORIA COMPARTIDA 
 
@@ -62,7 +55,7 @@ using namespace std;
 #define MAX_LONG_PKT CABECERA_IP+CABECERA_TPDU+MAX_DATOS
 
 typedef struct _cab_tcp {
-    int tipo; //CC o CR
+    int tipo; //CC,CR,DR,DATOS,ACK
     int id_local;
     int id_destino;
     uint16_t puerto_orig;
