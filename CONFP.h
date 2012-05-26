@@ -22,6 +22,8 @@ using namespace std;
 #define LISTEN 202
 #define CONNECT 203
 #define ESTABLISHED 204
+#define FIN_WAIT1 205
+#define FIN_WAIT2 206
 
 #define DEPURA 0
 
@@ -110,6 +112,7 @@ typedef struct _conexion {
   int ultimo_ack;
   int numero_secuencia;
   bool signal_disconnect;// señal del disconnect, para avisar de que terminemos el flujo
+  bool desconexion_remota;
   struct in_addr ip_destino;
   struct in_addr ip_local;
   

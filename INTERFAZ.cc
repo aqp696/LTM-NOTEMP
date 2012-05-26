@@ -233,12 +233,16 @@ int t_disconnect(int id) {
     tsap_destino.puerto = KERNEL->CXs[id].puerto_destino;
     
     //creamos paquete DR y enviamos
-    if (KERNEL->CXs[id].TX.size() == 0) {//miramos si no hay paquetes pendientes de ACK
+    if (KERNEL->CXs[id].TX.empty()) {//miramos si no hay paquetes pendientes de ACK
         it_libre = buscar_buffer_libre();
         it_tx = KERNEL->CXs[id].TX.end();
         KERNEL->CXs[id].TX.splice(it_tx, KERNEL->buffers_libres, it_libre);
+        it_tx = --KERNEL->CXs[id].TX.end();
         crear_pkt(it_tx->pkt, DR, &tsap_destino, &tsap_origen, NULL, 0, id, KERNEL->CXs[id].id_destino);
         enviar_tpdu(tsap_destino.ip, it_tx->pkt, sizeof (tpdu));
+        
+        //modificamos el estado de la conexion
+        //KERNEL->CXs[id].estado_cx = FIN_WAIT1;
 
         //desbloqueamos KERNEL y nos bloqueamos
         KERNEL->CXs[id].primitiva_dormida = true;
@@ -281,6 +285,7 @@ size_t t_send(int id, const void *datos, size_t longitud, int8_t *flags) {
         return EXBADTID;
     }
     
+    
     //miramos cuantos sends hacen falta
     int numero_sends;
     if(longitud <= MAX_DATOS){
@@ -310,8 +315,23 @@ size_t t_send(int id, const void *datos, size_t longitud, int8_t *flags) {
     
     //mientras queden datos por transmitir ... ENVIAMOS
     while(numero_sends > 0){
+
+        //miramos si la conexion no se esta cerrando
+        if (KERNEL->CXs[id].signal_disconnect == true) {
+            desbloquear_acceso(&KERNEL->SEMAFORO);
+            ltm_exit_kernel((void**) &KERNEL);
+            return EXCLOSE;
+        }
+        
+        if(KERNEL->CXs[id].desconexion_remota){
+            desbloquear_acceso(&KERNEL->SEMAFORO);
+            ltm_exit_kernel((void**)&KERNEL);
+            return EXDISC;
+        }
+        
         //miramos si tenemos espacio en buffer de TX
-        if((KERNEL->CXs[id].TX.size() < KERNEL->NUM_BUF_PKTS)){
+        if((KERNEL->CXs[id].TX.size() < KERNEL->NUM_BUF_PKTS)) {
+            
             //buscamos un buffer_libre
             it_libres = buscar_buffer_libre();
             memcpy(it_libres->pkt->datos,puntero_datos,tamanho);

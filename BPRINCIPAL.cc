@@ -43,6 +43,7 @@ void bucle_principal(void) {
     KERNEL->indice_libre =0;
     KERNEL->NUM_BUF_PKTS = NUM_BUF_PKTS;
     int i;
+    int indice;
     //inicializamos cada conexion
     for(i=0;i<NUM_MAX_CXs;i++){
         //memset(&KERNEL->CXs[i],0,sizeof(conexion_t));
@@ -51,6 +52,7 @@ void bucle_principal(void) {
         
         KERNEL->CXs[i].estado_cx = CLOSED;
         KERNEL->CXs[i].signal_disconnect = false;
+        KERNEL->CXs[i].desconexion_remota = false;
         INICIA_LISTA(KERNEL->CXs[i].TX,buf_pkt);
         INICIA_LISTA(KERNEL->CXs[i].RX,buf_pkt);
     }
@@ -182,22 +184,24 @@ void bucle_principal(void) {
                         break;
                     case ACK:
                         fprintf(stderr,"\nRecibido un ACK");
+                        indice = KERNEL->CXs[puntero_pkt->cabecera.id_destino].TX.size();// lo hago porque size() varia en el bucle
                         it_tx = KERNEL->CXs[puntero_pkt->cabecera.id_destino].TX.begin();//apunta al principio de TX
                         //LIBERAMOS TODOS LOS PAKETES ASENTIDOS
-                        for(i=0;(uint)i < KERNEL->CXs[puntero_pkt->cabecera.id_destino].TX.size();i++){
+                        for(i=0;(uint)i < (uint)indice;i++){
                             //miramos a que buffer de TX asiente y pasamos a buffer libres
                             if(puntero_pkt->cabecera.numero_secuencia >= it_tx->num_secuencia){
                                 it_tx->estado_pkt = confirmado;
                                 it_libres = KERNEL->buffers_libres.begin();
                                 KERNEL->buffers_libres.splice(it_libres,KERNEL->CXs[puntero_pkt->cabecera.id_destino].TX,it_tx);
                                 it_tx++;//avanzamos el iterador al siguiente buffer de TX
-                                //si hay HUECO en buffer TX llamamos a la primitiva
-                                if(KERNEL->CXs[puntero_pkt->cabecera.id_destino].primitiva_dormida == true){
+                                //si hay HUECO en buffer TX llamamos a la primitiva si no hay un DISCONNECT
+                                if((KERNEL->CXs[puntero_pkt->cabecera.id_destino].primitiva_dormida == true)
+                                        &&(KERNEL->CXs[puntero_pkt->cabecera.id_destino].signal_disconnect==false)){
                                     desbloquear_acceso(&KERNEL->SEMAFORO);
                                     despierta_conexion(&KERNEL->CXs[puntero_pkt->cabecera.id_destino].barC);
                                 }
                             }        
-                        }
+                       }
                         break;
                     case DATOS:
                         //miramos si hay sitio en buffer RX
