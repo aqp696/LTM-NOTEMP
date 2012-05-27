@@ -16,6 +16,7 @@ using namespace std;
 #define DATOS 103
 #define ACK 104
 #define DR 105
+#define DC 106
 
 //ESTADOS DE LA CONEXION
 #define CLOSED 201
@@ -57,16 +58,17 @@ using namespace std;
 #define MAX_LONG_PKT CABECERA_IP+CABECERA_TPDU+MAX_DATOS
 
 typedef struct _cab_tcp {
-    int tipo; //CC,CR,DR,DATOS,ACK
-    int id_local;
-    int id_destino;
+    uint8_t tipo; //CC,CR,DR,DATOS,ACK
+    uint8_t id_local;
+    uint8_t id_destino;
     uint16_t puerto_orig;
     uint16_t puerto_dest;
-    struct in_addr ip_local;
-    struct in_addr ip_destino;
-    int conexion_aceptada;
-    int tamanho_datos;
-    int numero_secuencia;
+    //struct in_addr ip_local;
+    //struct in_addr ip_destino;
+    uint8_t conexion_aceptada; // se usa como CCpos y CCneg, o como ultimo pakete si flags = BLOCK
+    uint16_t tamanho_datos;
+    uint32_t numero_secuencia;
+    uint8_t close;
     //..mas datos
 }cab_tcp;
 
@@ -92,7 +94,7 @@ typedef struct _buf_pkt {
     unsigned int bytes_restan;
     int estado_pkt;//asentido o no
     int contador_rtx;//para saber si se agotaron las rtx
-    int num_secuencia;
+    uint num_secuencia;
     list<evento_t,shm_Allocator<evento_t> >::iterator it_tout_pkt;//iterador a evento_t
     tpdu *pkt;
     
@@ -110,7 +112,7 @@ typedef struct _conexion {
   int resultado_peticion;
   int id_destino;
   int ultimo_ack;
-  int numero_secuencia;
+  uint numero_secuencia;
   bool signal_disconnect;// señal del disconnect, para avisar de que terminemos el flujo
   bool desconexion_remota;
   struct in_addr ip_destino;
@@ -159,7 +161,7 @@ uint16_t buscar_puerto_libre();
 int comprobar_parametros(const t_direccion *tsap_destino,t_direccion *tsap_origen,char tipo);
 int buscar_celda_libre();
 void crear_pkt(tpdu *pkt,char tipo, t_direccion *tsap_dest,t_direccion *tsap_origen, void *datos, int longitud,int id_local, int id_destino);
-int asign_conexion_CR(tpdu *,kernel_shm_t *);
+int asign_conexion_CR(struct in_addr ip_remota, tpdu* puntero_pkt);
 void inicializar_CXs_libres();
 int buscar_connect_repetido(t_direccion *tsap_origen,const t_direccion *tsap_destino);
 int buscar_listen_repetido(t_direccion *tsap_escucha, t_direccion *tsap_remota);
