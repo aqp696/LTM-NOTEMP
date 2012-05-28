@@ -118,7 +118,7 @@ void bucle_principal(void) {
                             it_libres = KERNEL->buffers_libres.end();
                             it_tx = --KERNEL->CXs[puntero_pkt->cabecera.id_destino].TX.end();
                             KERNEL->buffers_libres.splice(it_libres,KERNEL->CXs[puntero_pkt->cabecera.id_destino].TX,it_tx);
-                            //iniciamos el numero de secuencia para esta conexion
+                            //iniciamos el NUMERO DE SECUENCIA para esta conexion
                             KERNEL->CXs[puntero_pkt->cabecera.id_destino].numero_secuencia = 0;
                         }
                         desbloquear_acceso(&KERNEL->SEMAFORO);
@@ -145,7 +145,7 @@ void bucle_principal(void) {
                             KERNEL->CXs[resul].puerto_destino = puntero_pkt->cabecera.puerto_orig;
                             KERNEL->CXs[resul].ip_destino = ip_remota;
                             KERNEL->CXs[resul].id_destino = puntero_pkt->cabecera.id_local;
-                           //iniciamos el numero de secuencia para esta conexion
+                           //iniciamos el NUMERO DE SECUENCIA para esta conexion
                             KERNEL->CXs[resul].numero_secuencia = 0;
                         }
                         fprintf(stderr,"\nid_destino es: %d",puntero_pkt->cabecera.id_local);
@@ -196,7 +196,7 @@ void bucle_principal(void) {
                                 it_tx++;//avanzamos el iterador al siguiente buffer de TX
                                 
                                 //miramos si hay que mandar un DR
-                                if((KERNEL->CXs[puntero_pkt->cabecera.id_destino].TX.size() == 0)
+                                if((KERNEL->CXs[puntero_pkt->cabecera.id_destino].TX.empty())
                                         &&(KERNEL->CXs[puntero_pkt->cabecera.id_destino].signal_disconnect == true)) {
                                     //rellenamos datos de los TSAPs
                                     //t_direccion tsap_origen, tsap_destino;
@@ -212,6 +212,12 @@ void bucle_principal(void) {
                                     it_tx = --KERNEL->CXs[puntero_pkt->cabecera.id_destino].TX.end();
                                     crear_pkt(it_tx->pkt, DR, &tsap_destino, &tsap_origen, NULL, 0, puntero_pkt->cabecera.id_destino, puntero_pkt->cabecera.id_local);
                                     enviar_tpdu(tsap_destino.ip, it_tx->pkt, sizeof (tpdu));
+                                    
+                                    //ahora hay que avisar al send si esta dormido, que de un EXCLOSE
+                                    if(KERNEL->CXs[puntero_pkt->cabecera.id_destino].primitiva_dormida == true){
+                                        desbloquear_acceso(&KERNEL->SEMAFORO);
+                                        despierta_conexion(&KERNEL->CXs[puntero_pkt->cabecera.id_destino].barC);
+                                    }
                                 }
                                 
                                 //DESPUES DE MANDAR EL DR no despuerto  SEND porque habrá finalizado con EXDISC
@@ -276,6 +282,9 @@ void bucle_principal(void) {
                     case DC:
                         fprintf(stderr,"\nRecibido un DISCONECTION CONFIRM");
                         //???QUE HACER?
+                        //pasamos el buffer de TX a libres
+                        KERNEL->buffers_libres.splice(KERNEL->buffers_libres.begin(),KERNEL->CXs[puntero_pkt->cabecera.id_destino].TX);
+                        //liberamos la conexion
                         break;
 
                 }
