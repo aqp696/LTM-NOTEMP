@@ -30,7 +30,7 @@ void bucle_principal(void) {
     //datos mios
     char pkt[MAX_LONG_PKT];
     tpdu *puntero_pkt;
-    //tpdu paquete;//esto me vale de momento->> luego hacer malloc(sizeof(tpdu))
+    tpdu paquete;//esto me vale de momento->> luego hacer malloc(sizeof(tpdu))
     t_direccion tsap_origen,tsap_destino;//no se si usarlas aqui o meterlas en la cabecera tcp
     //int iIdCx = 0; //cuando inicia ltmd iIdCx = 0, con cada CONNECT iIcCx++
 
@@ -130,7 +130,7 @@ void bucle_principal(void) {
                     case CR:
                         fprintf(stderr,"\nRecibido un CONEXION REQUEST");
                         //comprobar si tiene conexcion preparada en listen
-                        resul = asign_conexion_CR(puntero_pkt,KERNEL);
+                        resul = asign_conexion_CR(ip_remota,puntero_pkt);
                         it_libres = buscar_buffer_libre();
                         fprintf(stderr,"\nLe asigno al connect la conexion: %d",resul);
                         if (resul == EXNOTSAP) {
@@ -194,6 +194,28 @@ void bucle_principal(void) {
                                 it_libres = KERNEL->buffers_libres.begin();
                                 KERNEL->buffers_libres.splice(it_libres,KERNEL->CXs[puntero_pkt->cabecera.id_destino].TX,it_tx);
                                 it_tx++;//avanzamos el iterador al siguiente buffer de TX
+                                
+                                //miramos si hay que mandar un DR
+                                if((KERNEL->CXs[puntero_pkt->cabecera.id_destino].TX.size() == 0)
+                                        &&(KERNEL->CXs[puntero_pkt->cabecera.id_destino].signal_disconnect == true)) {
+                                    //rellenamos datos de los TSAPs
+                                    //t_direccion tsap_origen, tsap_destino;
+                                    tsap_origen.ip.s_addr = KERNEL->CXs[puntero_pkt->cabecera.id_destino].ip_local.s_addr;
+                                    tsap_origen.puerto = puntero_pkt->cabecera.puerto_dest;
+                                    tsap_destino.ip.s_addr = ip_remota.s_addr;
+                                    tsap_destino.puerto = puntero_pkt->cabecera.puerto_orig;
+                                    
+                                    //mandamos el DR a través del buffer TX
+                                    it_libres = buscar_buffer_libre();
+                                    it_tx = KERNEL->CXs[puntero_pkt->cabecera.id_destino].TX.end();
+                                    KERNEL->CXs[puntero_pkt->cabecera.id_destino].TX.splice(it_tx, KERNEL->buffers_libres, it_libres);
+                                    it_tx = --KERNEL->CXs[puntero_pkt->cabecera.id_destino].TX.end();
+                                    crear_pkt(it_tx->pkt, DR, &tsap_destino, &tsap_origen, NULL, 0, puntero_pkt->cabecera.id_destino, puntero_pkt->cabecera.id_local);
+                                    enviar_tpdu(tsap_destino.ip, it_tx->pkt, sizeof (tpdu));
+                                }
+                                
+                                //DESPUES DE MANDAR EL DR no despuerto  SEND porque habrá finalizado con EXDISC
+                                
                                 //si hay HUECO en buffer TX llamamos a la primitiva si no hay un DISCONNECT
                                 if((KERNEL->CXs[puntero_pkt->cabecera.id_destino].primitiva_dormida == true)
                                         &&(KERNEL->CXs[puntero_pkt->cabecera.id_destino].signal_disconnect==false)){
@@ -203,6 +225,7 @@ void bucle_principal(void) {
                             }        
                        }
                         break;
+                        
                     case DATOS:
                         //miramos si hay sitio en buffer RX
                         if((int)KERNEL->CXs[puntero_pkt->cabecera.id_destino].RX.size() < NUM_BUF_PKTS){
@@ -215,11 +238,17 @@ void bucle_principal(void) {
                                 it_rx = KERNEL->CXs[puntero_pkt->cabecera.id_destino].RX.end();
                                 KERNEL->CXs[puntero_pkt->cabecera.id_destino].RX.splice(it_rx,KERNEL->buffers_libres,it_libres);
                                 //rellenamos datos de los TSAPs
-                                t_direccion tsap_origen, tsap_destino;
+                                //t_direccion tsap_origen, tsap_destino;
                                 tsap_origen.ip.s_addr = KERNEL->CXs[puntero_pkt->cabecera.id_destino].ip_local.s_addr;
                                 tsap_origen.puerto = puntero_pkt->cabecera.puerto_dest;
                                 tsap_destino.ip.s_addr = ip_remota.s_addr;
                                 tsap_destino.puerto = puntero_pkt->cabecera.puerto_orig;
+                                
+                                //miramos si la conexion remota está cerrando su flujo
+                                //si se cumple, avisamos al KERNEL del evento
+                                if(puntero_pkt->cabecera.close == 1){
+                                    KERNEL->CXs[puntero_pkt->cabecera.id_destino].desconexion_remota = true;
+                                }
                                 
                                 //construimos el ACK y enviamos
                                 it_libres = buscar_buffer_libre();
@@ -228,6 +257,25 @@ void bucle_principal(void) {
                                 enviar_tpdu(ip_remota,it_libres->pkt,sizeof(tpdu));
                             }
                         }
+                        break;
+                        
+                    case DR:
+                        fprintf(stderr,"\nRecibido un DISCONECTION REQUEST");
+                        //actualizamos el estado de la conexion DEBERIAMOS TENER UN CLOSE_WAIT
+                        KERNEL->CXs[puntero_pkt->cabecera.id_destino].desconexion_remota = true;
+                        //rellenamos los tsaps
+                        tsap_origen.ip.s_addr = KERNEL->CXs[puntero_pkt->cabecera.id_destino].ip_local.s_addr;
+                        tsap_origen.puerto = puntero_pkt->cabecera.puerto_dest;
+                        tsap_destino.ip.s_addr = ip_remota.s_addr;
+                        tsap_destino.puerto = puntero_pkt->cabecera.puerto_orig;
+                        //construimos el paquete DC y enviamos
+                        crear_pkt(&paquete,DC,&tsap_destino,&tsap_origen,NULL,0,puntero_pkt->cabecera.id_destino,puntero_pkt->cabecera.id_local);
+                        enviar_tpdu(ip_remota,&paquete,sizeof(tpdu));
+
+                        break;
+                    case DC:
+                        fprintf(stderr,"\nRecibido un DISCONECTION CONFIRM");
+                        //???QUE HACER?
                         break;
 
                 }
