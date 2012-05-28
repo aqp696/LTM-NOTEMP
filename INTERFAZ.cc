@@ -342,11 +342,15 @@ size_t t_send(int id, const void *datos, size_t longitud, int8_t *flags) {
             KERNEL->CXs[id].TX.splice(it_tx,KERNEL->buffers_libres,it_libres);
             it_tx = --KERNEL->CXs[id].TX.end();
             
-            //creamos el pakete y lo enviamos
+            //creamos el pakete y lo enviamos, crear_pkt pone cabecera.close=0 por defecto
             crear_pkt(it_tx->pkt,DATOS,&tsap_destino,&tsap_origen,it_tx->pkt->datos,tamanho,id,KERNEL->CXs[id].id_destino);
                         //si es el ultimo PKT miramos si FLAGS = SEND_CLOSE
             if((numero_sends == 1)&&(((*flags)&CLOSE) == CLOSE) ){
                 it_tx->pkt->cabecera.close = 1;// solo lo pongo a uno en el ultimo pakete
+                //creo que deberia poner signal_disconnect=true
+                KERNEL->CXs[id].signal_disconnect = true;
+                //avisamos a la aplicacion del envio de todos los datos
+                *flags=*flags & (0xFF^CLOSE);
             }
             enviar_tpdu(tsap_destino.ip,it_tx->pkt,sizeof(tpdu));
             it_tx->estado_pkt = no_confirmado;
