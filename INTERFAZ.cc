@@ -242,7 +242,7 @@ int t_disconnect(int id) {
         enviar_tpdu(tsap_destino.ip, it_tx->pkt, sizeof (tpdu));
         
         //modificamos el estado de la conexion
-        //KERNEL->CXs[id].estado_cx = FIN_WAIT1;
+        //KERNEL->CXs[id].estado_cx = FIN_WAIT1; QUE HACER, usar??????????
 
         //desbloqueamos KERNEL y nos bloqueamos
         KERNEL->CXs[id].primitiva_dormida = true;
@@ -316,13 +316,15 @@ size_t t_send(int id, const void *datos, size_t longitud, int8_t *flags) {
     //mientras queden datos por transmitir ... ENVIAMOS
     while(numero_sends > 0){
 
-        //miramos si la conexion no se esta cerrando
+        //miramos si la conexion origen no se esta cerrando, 
+        //debido a activacion del signal_disconnect por un DISCONNECT
         if (KERNEL->CXs[id].signal_disconnect == true) {
             desbloquear_acceso(&KERNEL->SEMAFORO);
             ltm_exit_kernel((void**) &KERNEL);
             return EXCLOSE;
         }
         
+        //miramos si la TSAP remoto no ha cerrado su conexion
         if(KERNEL->CXs[id].desconexion_remota){
             desbloquear_acceso(&KERNEL->SEMAFORO);
             ltm_exit_kernel((void**)&KERNEL);
@@ -339,8 +341,13 @@ size_t t_send(int id, const void *datos, size_t longitud, int8_t *flags) {
             it_tx = KERNEL->CXs[id].TX.end();
             KERNEL->CXs[id].TX.splice(it_tx,KERNEL->buffers_libres,it_libres);
             it_tx = --KERNEL->CXs[id].TX.end();
+            
             //creamos el pakete y lo enviamos
             crear_pkt(it_tx->pkt,DATOS,&tsap_destino,&tsap_origen,it_tx->pkt->datos,tamanho,id,KERNEL->CXs[id].id_destino);
+                        //si es el ultimo PKT miramos si FLAGS = SEND_CLOSE
+            if((numero_sends == 1)&&(((*flags)&CLOSE) == CLOSE) ){
+                it_tx->pkt->cabecera.close = 1;// solo lo pongo a uno en el ultimo pakete
+            }
             enviar_tpdu(tsap_destino.ip,it_tx->pkt,sizeof(tpdu));
             it_tx->estado_pkt = no_confirmado;
             it_tx->contador_rtx = NUM_MAX_RTx;
@@ -359,7 +366,7 @@ size_t t_send(int id, const void *datos, size_t longitud, int8_t *flags) {
             bloquea_llamada(&KERNEL->CXs[id].barC);
             bloquear_acceso(&KERNEL->SEMAFORO);
             KERNEL->CXs[id].primitiva_dormida = false;
-            
+            //miramos por que me despertaron y si hubo error
             if(KERNEL->CXs[id].resultado_primitiva == EXNET){
                 desbloquear_acceso(&KERNEL->SEMAFORO);
                 ltm_exit_kernel((void**)&KERNEL);
@@ -395,6 +402,13 @@ size_t t_receive(int id, void *datos, size_t longitud, int8_t *flags) {
         desbloquear_acceso(&KERNEL->SEMAFORO);
         ltm_exit_kernel((void**)&KERNEL);
         return EXBADTID;
+    }
+    
+    //miramos si recibimos peticion de desconexion, y si no hay nada que entregar
+    if((KERNEL->CXs[id].desconexion_remota == true)&&(KERNEL->CXs[id].RX.empty())){
+        desbloquear_acceso(&KERNEL->SEMAFORO);
+        ltm_exit_kernel((void**)&KERNEL);
+        return EXDISC;
     }
     
     //datos internos para el control del bucle y variable del return
