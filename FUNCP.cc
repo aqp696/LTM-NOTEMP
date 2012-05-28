@@ -107,6 +107,7 @@ void crear_pkt(tpdu *pkt,char tipo, t_direccion *tsap_destino,t_direccion *tsap_
     pkt->cabecera.puerto_orig = tsap_origen->puerto;
     //pkt->cabecera.ip_destino = tsap_destino->ip;
     //pkt->cabecera.ip_local = tsap_origen->ip;
+    pkt->cabecera.close = 0;
     pkt->cabecera.id_destino = id_destino;
     pkt->cabecera.id_local = id_local;
     pkt->cabecera.tamanho_datos=longitud;
