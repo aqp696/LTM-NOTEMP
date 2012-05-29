@@ -134,9 +134,7 @@ void bucle_principal(void) {
                         fprintf(stderr,"\npuntero_pkt->cabecera.puerto_dest: %d",puntero_pkt->cabecera.puerto_dest);
                         fprintf(stderr,"\npuntero_pkt->cabecera.id_destino: %d",puntero_pkt->cabecera.id_destino);
                         fprintf(stderr,"\npuntero_pkt->cabecera.id_local: %d",puntero_pkt->cabecera.id_local);
-                        for(j=0;j<NUM_MAX_CXs;j++){
-                            fprintf(stderr,"\nip_remota.s_addr: %s; KERNEL->CXs[%d].ip_local.s_addr: %s",inet_ntop(AF_INET, &ip_remota, ipcharbuf, 20),i,inet_ntop(AF_INET,&KERNEL->CXs[i].ip_local,ipcharbuf,20));
-                        }
+                        fprintf(stderr,"\nip_local: %s",inet_ntop(AF_INET,&(KERNEL->CXs[0].ip_local.s_addr),ipcharbuf,20));
                        
                         //comprobar si tiene conexcion preparada en listen
                         resul = asign_conexion_CR(ip_remota,puntero_pkt);
