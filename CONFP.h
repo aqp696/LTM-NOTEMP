@@ -64,7 +64,7 @@ typedef struct _cab_tcp {
     uint16_t puerto_orig;
     uint16_t puerto_dest;
     //struct in_addr ip_local;
-    //struct in_addr ip_destino;
+    struct in_addr ip_destino;
     uint8_t conexion_aceptada; // se usa como CCpos y CCneg, o como ultimo pakete si flags = BLOCK
     uint16_t tamanho_datos;
     uint32_t numero_secuencia;
