@@ -122,6 +122,8 @@ int asign_conexion_CR(struct in_addr ip_remota,tpdu *puntero_pkt) {
     int i;
     int indice = EXNOTSAP;
     for (i = 0; i < NUM_MAX_CXs; i++) {
+        fprintf(stderr,"\nip_remota.s_addr: %d; KERNEL->CXs[%d].ip_local.s_addr: %d",ip_remota.s_addr,i,KERNEL->CXs[i].ip_local.s_addr);
+        
         if((ip_remota.s_addr == KERNEL->CXs[i].ip_local.s_addr)
                 &&(puntero_pkt->cabecera.puerto_dest == KERNEL->CXs[i].puerto_origen)){
         if(
