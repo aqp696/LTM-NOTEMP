@@ -105,7 +105,7 @@ void crear_pkt(tpdu *pkt,char tipo, t_direccion *tsap_destino,t_direccion *tsap_
     pkt->cabecera.tipo = tipo;
     pkt->cabecera.puerto_dest = tsap_destino->puerto;
     pkt->cabecera.puerto_orig = tsap_origen->puerto;
-    //pkt->cabecera.ip_destino = tsap_destino->ip;
+    pkt->cabecera.ip_destino = tsap_destino->ip;
     //pkt->cabecera.ip_local = tsap_origen->ip;
     pkt->cabecera.close = 0;
     pkt->cabecera.id_destino = id_destino;
@@ -124,7 +124,7 @@ int asign_conexion_CR(struct in_addr ip_remota,tpdu *puntero_pkt) {
     for (i = 0; i < NUM_MAX_CXs; i++) {
         //fprintf(stderr,"\nip_remota.s_addr: %s; KERNEL->CXs[%d].ip_local.s_addr: %s",inet_ntop(AF_INET, &ip_remota, ipcharbuf, 20),i,KERNEL->);
         
-        if((ip_remota.s_addr == KERNEL->CXs[i].ip_local.s_addr)
+        if((puntero_pkt->cabecera.ip_destino.s_addr == KERNEL->CXs[i].ip_local.s_addr)
                 &&(puntero_pkt->cabecera.puerto_dest == KERNEL->CXs[i].puerto_origen)){
         if(
                 //ip_destino cero, puerto cero y listen
