@@ -129,6 +129,10 @@ void bucle_principal(void) {
                         
                     case CR:
                         fprintf(stderr,"\nRecibido un CONEXION REQUEST");
+                        fprintf(stderr,"\npuntero_pkt->cabecera.puerto_orig: %d",puntero_pkt->cabecera.puerto_orig);
+                        fprintf(stderr,"\npuntero_pkt->cabecera.puerto_dest: %d",puntero_pkt->cabecera.puerto_dest);
+                        fprintf(stderr,"\npuntero_pkt->cabecera.id_destino: %d",puntero_pkt->cabecera.id_destino);
+                        fprintf(stderr,"\npuntero_pkt->cabecera.id_local: %d",puntero_pkt->cabecera.id_local);
                         //comprobar si tiene conexcion preparada en listen
                         resul = asign_conexion_CR(ip_remota,puntero_pkt);
                         it_libres = buscar_buffer_libre();
