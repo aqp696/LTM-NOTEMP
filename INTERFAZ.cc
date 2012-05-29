@@ -13,8 +13,8 @@ char dir_proto[64] = KERNEL_MEM_ADDR;
 int t_connect(const t_direccion *tsap_destino, t_direccion *tsap_origen) {
     int res = EXOK;
     t_direccion tsap_destino_aux;
-    list<buf_pkt>::iterator it_buffer;
-    list<buf_pkt>::iterator it_tx;
+    list<buf_pkt, shm_Allocator<buf_pkt> >::iterator it_buffer;
+    list<buf_pkt, shm_Allocator<buf_pkt> >::iterator it_tx;
 #ifdef DEPURA
     fprintf(stderr,"\nObtenemos el Kernel");
 #endif

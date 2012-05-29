@@ -93,10 +93,10 @@ void bucle_principal(void) {
                 
                 bloquear_acceso(&KERNEL->SEMAFORO);
                 
-                list<buf_pkt>::iterator it_buffer;
-                list<buf_pkt>::iterator it_libres;
-                list<buf_pkt>::iterator it_tx;
-                list<buf_pkt>::iterator it_rx;
+                list<buf_pkt, shm_Allocator<buf_pkt> >::iterator it_buffer;
+                list<buf_pkt, shm_Allocator<buf_pkt> >::iterator it_libres;
+                list<buf_pkt, shm_Allocator<buf_pkt> >::iterator it_tx;
+                list<buf_pkt, shm_Allocator<buf_pkt> >::iterator it_rx;
                 int resul;
                 
                 switch(puntero_pkt->cabecera.tipo){
