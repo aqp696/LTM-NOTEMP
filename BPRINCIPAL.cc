@@ -25,6 +25,7 @@ void bucle_principal(void) {
     int shortest = -1;
     struct in_addr ip_remota;
     char ipcharbuf[20];
+    int j;
     
         
     //datos mios
@@ -133,6 +134,10 @@ void bucle_principal(void) {
                         fprintf(stderr,"\npuntero_pkt->cabecera.puerto_dest: %d",puntero_pkt->cabecera.puerto_dest);
                         fprintf(stderr,"\npuntero_pkt->cabecera.id_destino: %d",puntero_pkt->cabecera.id_destino);
                         fprintf(stderr,"\npuntero_pkt->cabecera.id_local: %d",puntero_pkt->cabecera.id_local);
+                        for(j=0;j<NUM_MAX_CXs;j++){
+                            fprintf(stderr,"\nip_remota.s_addr: %s; KERNEL->CXs[%d].ip_local.s_addr: %s",inet_ntop(AF_INET, &ip_remota, ipcharbuf, 20),i,inet_ntop(AF_INET,&ip_remota,ipcharbuf,0));
+                        }
+                       
                         //comprobar si tiene conexcion preparada en listen
                         resul = asign_conexion_CR(ip_remota,puntero_pkt);
                         it_libres = buscar_buffer_libre();
