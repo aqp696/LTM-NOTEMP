@@ -379,7 +379,7 @@ size_t t_send(int id, const void *datos, size_t longitud, int8_t *flags) {
             desbloquear_acceso(&KERNEL->SEMAFORO);
             bloquea_llamada(&KERNEL->CXs[id].barC);
             bloquear_acceso(&KERNEL->SEMAFORO);
-            KERNEL->CXs[id].primitiva_dormida = false;
+            //KERNEL->CXs[id].primitiva_dormida = false;
             //miramos por que me despertaron y si hubo error
             if(KERNEL->CXs[id].resultado_primitiva == EXNET){
                 desbloquear_acceso(&KERNEL->SEMAFORO);
@@ -497,7 +497,7 @@ size_t t_receive(int id, void *datos, size_t longitud, int8_t *flags) {
             desbloquear_acceso(&KERNEL->SEMAFORO);
             bloquea_llamada(&KERNEL->CXs[id].barC);
             bloquear_acceso(&KERNEL->SEMAFORO);
-            KERNEL->CXs[id].primitiva_dormida = false;
+            //KERNEL->CXs[id].primitiva_dormida = false;
         }
     }
     // ..... aqui vuestro codigo

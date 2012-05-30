@@ -222,6 +222,7 @@ void bucle_principal(void) {
                                     
                                     //ahora hay que avisar al send si esta dormido, que de un EXCLOSE
                                     if(KERNEL->CXs[puntero_pkt->cabecera.id_destino].primitiva_dormida == true){
+                                        KERNEL->CXs[puntero_pkt->cabecera.id_destino].primitiva_dormida = false;
                                         desbloquear_acceso(&KERNEL->SEMAFORO);
                                         despierta_conexion(&KERNEL->CXs[puntero_pkt->cabecera.id_destino].barC);
                                     }
@@ -232,6 +233,7 @@ void bucle_principal(void) {
                                 //si hay HUECO en buffer TX llamamos a la primitiva si no hay un DISCONNECT
                                 if((KERNEL->CXs[puntero_pkt->cabecera.id_destino].primitiva_dormida == true)
                                         &&(KERNEL->CXs[puntero_pkt->cabecera.id_destino].signal_disconnect==false)){
+                                    KERNEL->CXs[puntero_pkt->cabecera.id_destino].primitiva_dormida = false;
                                     desbloquear_acceso(&KERNEL->SEMAFORO);
                                     despierta_conexion(&KERNEL->CXs[puntero_pkt->cabecera.id_destino].barC);
                                 }
@@ -279,6 +281,7 @@ void bucle_principal(void) {
                                 
                                 //miramos si despertamos al receive
                                 if(KERNEL->CXs[puntero_pkt->cabecera.id_destino].primitiva_dormida == true){
+                                    KERNEL->CXs[puntero_pkt->cabecera.id_destino].primitiva_dormida = false;
                                     fprintf(stderr,"\nBRPINCIPAL: despertamos al receive");
                                     desbloquear_acceso(&KERNEL->SEMAFORO);
                                     despierta_conexion(&KERNEL->CXs[puntero_pkt->cabecera.id_destino].barC);
@@ -306,6 +309,7 @@ void bucle_principal(void) {
                         KERNEL->CXs[puntero_pkt->cabecera.id_destino].estado_cx = CLOSED;
                         //miramos si hay que despertar a la primitiva
                         if(KERNEL->CXs[puntero_pkt->cabecera.id_destino].primitiva_dormida == true){
+                            KERNEL->CXs[puntero_pkt->cabecera.id_destino].primitiva_dormida = false;
                             desbloquear_acceso(&KERNEL->SEMAFORO);
                             despierta_conexion(&KERNEL->CXs[puntero_pkt->cabecera.id_destino].barC);
                             
