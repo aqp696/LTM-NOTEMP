@@ -91,20 +91,20 @@ void bucle_principal(void) {
                 list<buf_pkt, shm_Allocator<buf_pkt> >::iterator it_rx;
                 int resul;
                 
-                //it_libres = buscar_buffer_libre();
+                it_libres = buscar_buffer_libre();
                 
-                int rec = recibir_tpdu(pkt, MAX_LONG_PKT, &ip_remota, &offset);
-                //int rec = recibir_tpdu(it_libres->contenedor, MAX_LONG_PKT, &ip_remota, &offset);
+                //int rec = recibir_tpdu(pkt, MAX_LONG_PKT, &ip_remota, &offset);
+                int rec = recibir_tpdu(it_libres->contenedor, MAX_LONG_PKT, &ip_remota, &offset);
                 fprintf(stderr,"\nrec: %d",rec);
                 if (rec >= 0) {
                     fprintf(stderr,"desde la IP %s\ntexto del mensaje: %s\n",
-                            inet_ntop(AF_INET, &ip_remota, ipcharbuf, 20), pkt + offset);
-                            //inet_ntop(AF_INET, &ip_remota, ipcharbuf, 20), it_libres->contenedor + offset);
+                            //inet_ntop(AF_INET, &ip_remota, ipcharbuf, 20), pkt + offset);
+                            inet_ntop(AF_INET, &ip_remota, ipcharbuf, 20), it_libres->contenedor + offset);
                 }
                 
                 fprintf(stderr,"\nHola!!!!");
-                puntero_pkt = (tpdu *)(pkt+offset);
-                //puntero_pkt = (tpdu *)(it_libres->contenedor+offset);
+                //puntero_pkt = (tpdu *)(pkt+offset);
+                puntero_pkt = (tpdu *)(it_libres->contenedor+offset);
                 fprintf(stderr,"\nHola2!!!!");
                 
                 bloquear_acceso(&KERNEL->SEMAFORO);
