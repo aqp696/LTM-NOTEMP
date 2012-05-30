@@ -92,10 +92,13 @@ static int do_receiver_part(t_direccion *dir_local, t_direccion *dir_remota, cha
         fprintf(stderr, "Non se puido abrir o ficheiro: %s\n", fich);
         exit(1);
     }
+    
+    fprintf(stderr,"\nENTRO AKI1!!!");
 
     do {
 
         len1 = t_receive(cx1, buf, bs, &flags);
+        fprintf(stderr,"\nterminado un receive");
 
         if (len1 > 0 ) {
             bytesrecibidos += len1;
