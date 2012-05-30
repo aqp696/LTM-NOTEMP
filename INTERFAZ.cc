@@ -399,17 +399,21 @@ size_t t_send(int id, const void *datos, size_t longitud, int8_t *flags) {
 
 size_t t_receive(int id, void *datos, size_t longitud, int8_t *flags) {
     char *datos_aux =(char *) datos;
+    
+    fprintf(stderr,"\nRECEIVE: obtenemos el kernel");
     //obtenemos el KERNEL
     int er = ltm_get_kernel(dir_proto, (void**) & KERNEL);
     if (er < 0)
         return EXKERNEL;
-
+    
+    fprintf(stderr,"\nRECEIVE: miramos si datos==NULL");
     //miramos si hay datos disponibles
     if((datos == NULL)||(longitud < 0)){
         ltm_exit_kernel((void**)&KERNEL);
         return EXINVA;
     }
     
+    fprintf(stderr,"\nRECEIVE: miramos si la conexion esta ESTABLISHED");
     //miramos si existe la conexion establecida
     bloquear_acceso(&KERNEL->SEMAFORO);
     if(KERNEL->CXs[id].estado_cx != ESTABLISHED){
@@ -418,6 +422,7 @@ size_t t_receive(int id, void *datos, size_t longitud, int8_t *flags) {
         return EXBADTID;
     }
     
+    fprintf(stderr,"\nRECEIVE: miramos si la entidad remota me mando un SEND_CLOSE");
     //miramos si recibimos peticion de desconexion, y si no hay nada que entregar
     if(KERNEL->CXs[id].desconexion_remota == true){
         desbloquear_acceso(&KERNEL->SEMAFORO);
@@ -436,12 +441,14 @@ size_t t_receive(int id, void *datos, size_t longitud, int8_t *flags) {
     unsigned int indice;
     unsigned int num_buf_rx;
     
+    fprintf(stderr,"\nRECEIVE: Empezamos a recibir");
     //nos disponemos a recibir
     while(datos_por_recibir > 0){
         if(!(KERNEL->CXs[id].RX.empty())){//si hay datos en buffer RX ...
+            fprintf(stderr,"\nRECEIVE: el buffer de RX no esta vacio");
             num_buf_rx = KERNEL->CXs[id].RX.size();//lo hacemos porque si no variaria el size al hacer un splice
             for(indice=0; indice < num_buf_rx;indice++){
-                
+                fprintf(stderr,"\nRECEIVE: miramos si la entidad remota hizo un DISCONNECT");
                 //si la entidad remota hizo un DISCONNECT abrupto damos el error EXDISC
                 if(KERNEL->CXs[id].signal_disconnect == true) {
                     desbloquear_acceso(&KERNEL->SEMAFORO);
@@ -450,6 +457,8 @@ size_t t_receive(int id, void *datos, size_t longitud, int8_t *flags) {
                 }
                 
                 it_rx = KERNEL->CXs[id].RX.begin();
+                
+                fprintf(stderr,"\nRECEIVE: Miramos si cabecera.close=1");
                 //miramos si es el ultimo pakete con CLOSE para avisar a la aplicacion
                 if (it_rx->pkt->cabecera.close == 1) {
                     *flags = (*flags || CLOSE);
@@ -458,10 +467,13 @@ size_t t_receive(int id, void *datos, size_t longitud, int8_t *flags) {
                 it_libres = KERNEL->buffers_libres.begin();
                 //si de este buffer no quedan bytes lo pasamos a libres
                 if(it_rx->bytes_restan == 0){
+                    fprintf(stderr,"\nRECEIVE: el buffer ya no tiene mas datos, lo pasamos a LIBRES");
                     KERNEL->buffers_libres.splice(it_libres,KERNEL->CXs[id].RX,it_rx);
                 }else {//si no copiamos
+                    fprintf(stderr,"\nRECEIVE: el buffer aun contiene datos");
                     if (it_rx->bytes_restan > longitud) { //leemos lo que podamos del buffer de rx
                         memcpy(datos_aux, it_rx->ultimo_byte, longitud);
+                        fprintf(stderr,"\nRECEIVE: bytes_restan>longitud -> copiados los datos del buffer");
                         it_rx->bytes_restan -= longitud;
                         it_rx->ultimo_byte+=longitud+1;
                         datos_aux+=longitud;
@@ -469,6 +481,7 @@ size_t t_receive(int id, void *datos, size_t longitud, int8_t *flags) {
                         datos_por_recibir -=longitud;
                     }else{//leemos todo el buffer de rx
                         memcpy(datos_aux, it_rx->ultimo_byte, it_rx->bytes_restan);
+                        fprintf(stderr,"\nRECEIVE: bytes_restan<=longitud -> copiados los datos del buffer");
                         datos_por_recibir -= it_rx->bytes_restan;
                         it_rx->bytes_restan-=it_rx->bytes_restan;
                         it_rx->ultimo_byte+=it_rx->bytes_restan;
@@ -477,6 +490,7 @@ size_t t_receive(int id, void *datos, size_t longitud, int8_t *flags) {
                 }
             }
         }else{//si no hay datos en buffer RX-> DORMIRSE
+            fprintf(stderr, "RECEIVE: el buffer de recepcion esta vacio, nos dormimos");
             KERNEL->CXs[id].primitiva_dormida = true;
             desbloquear_acceso(&KERNEL->SEMAFORO);
             bloquea_llamada(&KERNEL->CXs[id].barC);
