@@ -240,6 +240,7 @@ void bucle_principal(void) {
                         break;
                         
                     case DATOS:
+                        fprintf(stderr,"\nRecibido un DATOS");
                         //miramos si hay sitio en buffer RX
                         if((int)KERNEL->CXs[puntero_pkt->cabecera.id_destino].RX.size() < NUM_BUF_PKTS){
                             fprintf(stderr,"\nBPRINCIPAL: hay sitio en el buffer de RX");
