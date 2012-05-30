@@ -99,7 +99,7 @@ void bucle_principal(void) {
                 if (rec >= 0) {
                     fprintf(stderr,"desde la IP %s\ntexto del mensaje: %s\n",
                             //inet_ntop(AF_INET, &ip_remota, ipcharbuf, 20), pkt + offset);
-                            inet_ntop(AF_INET, &ip_remota, ipcharbuf, 20), it_libres->pkt + offset);
+                            inet_ntop(AF_INET, &ip_remota, ipcharbuf, 20), &it_libres->pkt + offset);
                 }
                 
                 //puntero_pkt = (tpdu *)(pkt+offset)
