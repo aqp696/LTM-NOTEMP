@@ -87,6 +87,8 @@ static int do_receiver_part(t_direccion *dir_local, t_direccion *dir_remota, cha
     }
 
     mostra_tsaps(dir_local, dir_remota);
+    
+    fprintf("\nAntes de abrir fichero");
 
     if((fwri = fopen(fich,"w"))<0){
         fprintf(stderr, "Non se puido abrir o ficheiro: %s\n", fich);
