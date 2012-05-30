@@ -84,21 +84,25 @@ void bucle_principal(void) {
 
             case PAQUETE:                
                 fprintf(stderr,"\n (%d) Se ha recibido un PAQUETE ", cont + 1);
-
-                int rec = recibir_tpdu(pkt, MAX_LONG_PKT, &ip_remota, &offset);
-                if (rec >= 0) {
-                    fprintf(stderr,"desde la IP %s\ntexto del mensaje: %s\n",
-                            inet_ntop(AF_INET, &ip_remota, ipcharbuf, 20), pkt + offset);
-                }
-                puntero_pkt = (tpdu *)(pkt+offset);
-                
-                bloquear_acceso(&KERNEL->SEMAFORO);
-                
+                                
                 list<buf_pkt, shm_Allocator<buf_pkt> >::iterator it_buffer;
                 list<buf_pkt, shm_Allocator<buf_pkt> >::iterator it_libres;
                 list<buf_pkt, shm_Allocator<buf_pkt> >::iterator it_tx;
                 list<buf_pkt, shm_Allocator<buf_pkt> >::iterator it_rx;
                 int resul;
+                
+                it_libres = buscar_buffer_libre();
+                
+                //int rec = recibir_tpdu(pkt, MAX_LONG_PKT, &ip_remota, &offset);
+                int rec = recibir_tpdu(it_libres->pkt, MAX_LONG_PKT, &ip_remota, &offset);
+                if (rec >= 0) {
+                    fprintf(stderr,"desde la IP %s\ntexto del mensaje: %s\n",
+                            inet_ntop(AF_INET, &ip_remota, ipcharbuf, 20), pkt + offset);
+                }
+                puntero_pkt = (tpdu *)(it_libres->pkt+offset);
+                
+                bloquear_acceso(&KERNEL->SEMAFORO);
+
                 
                 switch(puntero_pkt->cabecera.tipo){
                     
@@ -249,10 +253,10 @@ void bucle_principal(void) {
                             //miramos si es el num_seq esperado
                             if(puntero_pkt->cabecera.numero_secuencia == KERNEL->CXs[puntero_pkt->cabecera.id_destino].numero_secuencia){
                                 fprintf(stderr,"\nBPRINCIPAL: el numero de secuencia es el que estoy esperando");
-                                it_libres = buscar_buffer_libre();
+                                //it_libres = buscar_buffer_libre();
                                 it_libres->bytes_restan = puntero_pkt->cabecera.tamanho_datos;
                                 it_libres->ultimo_byte = it_libres->pkt->datos;
-                                memcpy(it_libres->contenedor,puntero_pkt,sizeof(tpdu));
+                                //memcpy(it_libres->contenedor,puntero_pkt,sizeof(tpdu));
                                 fprintf(stderr,"\nBPRINCIPAL: copiado el contenido del pkt al buffer");
                                 it_rx = KERNEL->CXs[puntero_pkt->cabecera.id_destino].RX.end();
                                 KERNEL->CXs[puntero_pkt->cabecera.id_destino].RX.splice(it_rx,KERNEL->buffers_libres,it_libres);
