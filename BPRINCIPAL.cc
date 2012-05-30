@@ -97,8 +97,11 @@ void bucle_principal(void) {
                 int rec = recibir_tpdu(it_libres->pkt, MAX_LONG_PKT, &ip_remota, &offset);
                 if (rec >= 0) {
                     fprintf(stderr,"desde la IP %s\ntexto del mensaje: %s\n",
-                            inet_ntop(AF_INET, &ip_remota, ipcharbuf, 20), pkt + offset);
+                            //inet_ntop(AF_INET, &ip_remota, ipcharbuf, 20), pkt + offset);
+                            inet_ntop(AF_INET, &ip_remota, ipcharbuf, 20), it_libres->pkt + offset);
                 }
+                
+                //puntero_pkt = (tpdu *)(pkt+offset)
                 puntero_pkt = (tpdu *)(it_libres->pkt+offset);
                 
                 bloquear_acceso(&KERNEL->SEMAFORO);
