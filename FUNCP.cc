@@ -186,8 +186,8 @@ int buscar_listen_repetido(t_direccion *tsap_escucha, t_direccion *tsap_remota){
     return encontrada;
 }
 
-list<buf_pkt>::iterator buscar_buffer_libre(){
-    list<buf_pkt>::iterator it_libres;
+list<buf_pkt, shm_Allocator<buf_pkt> >::iterator buscar_buffer_libre(){
+    list<buf_pkt, shm_Allocator<buf_pkt> >::iterator it_libres;
     buf_pkt nodo;
     nodo.pkt = (tpdu *) nodo.contenedor;
     if(KERNEL->buffers_libres.empty()){
