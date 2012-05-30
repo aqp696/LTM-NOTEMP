@@ -94,7 +94,7 @@ void bucle_principal(void) {
                 it_libres = buscar_buffer_libre();
                 
                 //int rec = recibir_tpdu(pkt, MAX_LONG_PKT, &ip_remota, &offset);
-                int rec = recibir_tpdu(it_libres->pkt, MAX_LONG_PKT, &ip_remota, &offset);
+                int rec = recibir_tpdu(&it_libres->pkt, MAX_LONG_PKT, &ip_remota, &offset);
                 fprintf(stderr,"\nrec: %d",rec);
                 if (rec >= 0) {
                     fprintf(stderr,"desde la IP %s\ntexto del mensaje: %s\n",
