@@ -242,14 +242,18 @@ void bucle_principal(void) {
                     case DATOS:
                         //miramos si hay sitio en buffer RX
                         if((int)KERNEL->CXs[puntero_pkt->cabecera.id_destino].RX.size() < NUM_BUF_PKTS){
+                            fprintf(stderr,"\nBPRINCIPAL: hay sitio en el buffer de RX");
                             //miramos si es el num_seq esperado
                             if(puntero_pkt->cabecera.numero_secuencia == KERNEL->CXs[puntero_pkt->cabecera.id_destino].numero_secuencia){
+                                fprintf(stderr,"\nBPRINCIPAL: el numero de secuencia es el que estoy esperando");
                                 it_libres = buscar_buffer_libre();
                                 it_libres->bytes_restan = puntero_pkt->cabecera.tamanho_datos;
                                 it_libres->ultimo_byte = it_libres->pkt->datos;
                                 memcpy(it_libres->contenedor,puntero_pkt,sizeof(tpdu));
+                                fprintf(stderr,"\nBPRINCIPAL: copiado el contenido del pkt al buffer");
                                 it_rx = KERNEL->CXs[puntero_pkt->cabecera.id_destino].RX.end();
                                 KERNEL->CXs[puntero_pkt->cabecera.id_destino].RX.splice(it_rx,KERNEL->buffers_libres,it_libres);
+                                fprintf(stderr,"\nBPRINCIPAL: pasamos el buffer de libres a recepcion");
                                 //rellenamos datos de los TSAPs
                                 //t_direccion tsap_origen, tsap_destino;
                                 tsap_origen.ip.s_addr = KERNEL->CXs[puntero_pkt->cabecera.id_destino].ip_local.s_addr;
@@ -260,17 +264,21 @@ void bucle_principal(void) {
                                 //miramos si la conexion remota está cerrando su flujo
                                 //si se cumple, avisamos al KERNEL del evento
                                 if(puntero_pkt->cabecera.close == 1){
+                                    fprintf(stderr,"\nBPRINCIPAL: puntero_pkt->cabecera.close == 1");
                                     KERNEL->CXs[puntero_pkt->cabecera.id_destino].desconexion_remota = true;
                                 }
                                 
                                 //construimos el ACK y enviamos
                                 it_libres = buscar_buffer_libre();
+                                fprintf(stderr,"\nBPRINCIPAL: construimos ACK");
                                 crear_pkt(it_libres->pkt,ACK,&tsap_destino,&tsap_origen,NULL,0,puntero_pkt->cabecera.id_destino,puntero_pkt->cabecera.id_local);
                                 KERNEL->CXs[puntero_pkt->cabecera.id_destino].numero_secuencia++;//incrementamos numero_secuencia
+                                fprintf(stderr,"\nBPRINCIPAL: enviamos tpdu ACK");
                                 enviar_tpdu(ip_remota,it_libres->pkt,sizeof(tpdu));
                                 
                                 //miramos si despertamos al receive
                                 if(KERNEL->CXs[puntero_pkt->cabecera.id_destino].primitiva_dormida == true){
+                                    fprintf(stderr,"\nBRPINCIPAL: despertamos al receive");
                                     desbloquear_acceso(&KERNEL->SEMAFORO);
                                     despierta_conexion(&KERNEL->CXs[puntero_pkt->cabecera.id_destino].barC);
                                 }
