@@ -344,18 +344,23 @@ size_t t_send(int id, const void *datos, size_t longitud, int8_t *flags) {
         //miramos si tenemos espacio en buffer de TX
         if((KERNEL->CXs[id].TX.size() < KERNEL->NUM_BUF_PKTS)) {
             
+            fprintf(stderr,"\nSEND: hay espacio en el buffer de TX");
             //buscamos un buffer_libre
             it_libres = buscar_buffer_libre();
             memcpy(it_libres->pkt->datos,puntero_datos,tamanho);
+            fprintf(stderr,"\nSEND: copiamos los datos a it_libres");
             puntero_datos = puntero_datos + tamanho;
             it_tx = KERNEL->CXs[id].TX.end();
             KERNEL->CXs[id].TX.splice(it_tx,KERNEL->buffers_libres,it_libres);
+            fprintf(stderr,"\nSEND: pasamos el buffer a la lista de TX");
             it_tx = --KERNEL->CXs[id].TX.end();
             
             //creamos el pakete y lo enviamos, crear_pkt pone cabecera.close=0 por defecto
             crear_pkt(it_tx->pkt,DATOS,&tsap_destino,&tsap_origen,it_tx->pkt->datos,tamanho,id,KERNEL->CXs[id].id_destino);
+            fprintf(stderr,"\nSEND: creado el pakete de DATOS");
                         //si es el ultimo PKT miramos si FLAGS = SEND_CLOSE
             if((numero_sends == 1)&&(((*flags)&CLOSE) == CLOSE) ){
+                fprintf(stderr,"\nSEND: es el ultimo pakete con MODO CLOSE");
                 it_tx->pkt->cabecera.close = 1;// solo lo pongo a uno en el ultimo pakete
                 //creo que deberia poner signal_disconnect=true
                 KERNEL->CXs[id].signal_disconnect = true;
@@ -363,6 +368,7 @@ size_t t_send(int id, const void *datos, size_t longitud, int8_t *flags) {
                 //*flags=*flags & (0xFF^CLOSE);
             }
             enviar_tpdu(tsap_destino.ip,it_tx->pkt,sizeof(tpdu));
+            fprintf(stderr,"\nSEND: enviado TDPU");
             it_tx->estado_pkt = no_confirmado;
             it_tx->contador_rtx = NUM_MAX_RTx;
             it_tx->num_secuencia = KERNEL->CXs[id].numero_secuencia;
@@ -375,10 +381,12 @@ size_t t_send(int id, const void *datos, size_t longitud, int8_t *flags) {
                 tamanho = datos_a_transmitir;
             }
         }else{//si no me duermo
+            fprintf(stderr,"\nSEND: no hay espacio en lista de TX, me duermo");
             KERNEL->CXs[id].primitiva_dormida = true;
             desbloquear_acceso(&KERNEL->SEMAFORO);
             bloquea_llamada(&KERNEL->CXs[id].barC);
             bloquear_acceso(&KERNEL->SEMAFORO);
+            fprintf(stderr,"\nSEND: BPRINCIPAL me despierta, ya hay sitio en lista de TX");
             //KERNEL->CXs[id].primitiva_dormida = false;
             //miramos por que me despertaron y si hubo error
             if(KERNEL->CXs[id].resultado_primitiva == EXNET){
@@ -392,7 +400,7 @@ size_t t_send(int id, const void *datos, size_t longitud, int8_t *flags) {
     desbloquear_acceso(&KERNEL->SEMAFORO);
     
     // ..... aqui vuestro codigo
-
+    fprintf(stderr,"\nSEND: primitiva finalizada");
     ltm_exit_kernel((void**) & KERNEL);
     return datos_enviados;
 }
