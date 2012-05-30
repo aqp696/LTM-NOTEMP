@@ -209,8 +209,8 @@ int t_listen(t_direccion *tsap_escucha, t_direccion *tsap_remota) {
 
 
 int t_disconnect(int id) {
-    list<buf_pkt>::iterator it_libre;
-    list<buf_pkt>::iterator it_tx;
+    list<buf_pkt, shm_Allocator<buf_pkt> >::iterator it_libre;
+    list<buf_pkt, shm_Allocator<buf_pkt> >::iterator it_tx;
     
     //obtenemos el KERNEL
     int er = ltm_get_kernel(dir_proto, (void**) & KERNEL);
@@ -232,6 +232,15 @@ int t_disconnect(int id) {
     tsap_destino.ip.s_addr = KERNEL->CXs[id].ip_destino.s_addr;
     tsap_destino.puerto = KERNEL->CXs[id].puerto_destino;
     
+    it_libre = buscar_buffer_libre();
+    it_tx = KERNEL->CXs[id].TX.end();
+    KERNEL->CXs[id].TX.splice(it_tx,KERNEL->buffers_libres,it_libre);
+    it_tx = --KERNEL->CXs[id].TX.end();
+    crear_pkt(it_tx->pkt, DR, &tsap_destino, &tsap_origen, NULL, 0, id, KERNEL->CXs[id].id_destino);
+    enviar_tpdu(tsap_destino.ip, it_tx->pkt, sizeof(tpdu));
+    
+    
+    /*
     //creamos paquete DR y enviamos
     if (KERNEL->CXs[id].TX.empty()) {//miramos si no hay paquetes pendientes de ACK
         it_libre = buscar_buffer_libre();
@@ -253,6 +262,7 @@ int t_disconnect(int id) {
     }else{//si no, avisamos al KERNEL de que estamos cerrando
         KERNEL->CXs[id].signal_disconnect = true;
     }
+     */
     
     // ..... aqui vuestro codigo
     desbloquear_acceso(&KERNEL->SEMAFORO);
@@ -310,8 +320,8 @@ size_t t_send(int id, const void *datos, size_t longitud, int8_t *flags) {
     tsap_destino.puerto = KERNEL->CXs[id].puerto_destino;
     
     //definimos iteradores
-    list<buf_pkt>:: iterator it_libres;
-    list<buf_pkt>::iterator it_tx;
+    list<buf_pkt, shm_Allocator<buf_pkt> >:: iterator it_libres;
+    list<buf_pkt, shm_Allocator<buf_pkt> >::iterator it_tx;
     
     //mientras queden datos por transmitir ... ENVIAMOS
     while(numero_sends > 0){
@@ -321,14 +331,14 @@ size_t t_send(int id, const void *datos, size_t longitud, int8_t *flags) {
         if (KERNEL->CXs[id].signal_disconnect == true) {
             desbloquear_acceso(&KERNEL->SEMAFORO);
             ltm_exit_kernel((void**) &KERNEL);
-            return EXCLOSE;
+            return EXDISC;
         }
         
         //miramos si la TSAP remoto no ha cerrado su conexion
         if(KERNEL->CXs[id].desconexion_remota){
             desbloquear_acceso(&KERNEL->SEMAFORO);
             ltm_exit_kernel((void**)&KERNEL);
-            return EXDISC;
+            return EXCLOSE;
         }
         
         //miramos si tenemos espacio en buffer de TX
@@ -350,7 +360,7 @@ size_t t_send(int id, const void *datos, size_t longitud, int8_t *flags) {
                 //creo que deberia poner signal_disconnect=true
                 KERNEL->CXs[id].signal_disconnect = true;
                 //avisamos a la aplicacion del envio de todos los datos
-                *flags=*flags & (0xFF^CLOSE);
+                //*flags=*flags & (0xFF^CLOSE);
             }
             enviar_tpdu(tsap_destino.ip,it_tx->pkt,sizeof(tpdu));
             it_tx->estado_pkt = no_confirmado;
@@ -409,32 +419,42 @@ size_t t_receive(int id, void *datos, size_t longitud, int8_t *flags) {
     }
     
     //miramos si recibimos peticion de desconexion, y si no hay nada que entregar
-    if((KERNEL->CXs[id].desconexion_remota == true)&&(KERNEL->CXs[id].RX.empty())){
+    if(KERNEL->CXs[id].desconexion_remota == true){
         desbloquear_acceso(&KERNEL->SEMAFORO);
         ltm_exit_kernel((void**)&KERNEL);
-        return EXDISC;
+        return EXCLOSE;
     }
-    
-    //datos internos para el control del bucle y variable del return
-    int num_recvs = longitud/MAX_DATOS;
+
+    //miramos cuanto tenemos que recibir en el bucle
+    int datos_por_recibir = longitud;
     int datos_recibidos = 0;
-    if(longitud%MAX_DATOS > 0){
-        num_recvs += 1;
-    }
     
     //definimos iteradores
-    list<buf_pkt>:: iterator it_libres;
-    list<buf_pkt>::iterator it_rx;
+    list<buf_pkt, shm_Allocator<buf_pkt> >:: iterator it_libres;
+    list<buf_pkt, shm_Allocator<buf_pkt> >::iterator it_rx;
     
     unsigned int indice;
     unsigned int num_buf_rx;
     
     //nos disponemos a recibir
-    while(num_recvs > 0){
+    while(datos_por_recibir > 0){
         if(!(KERNEL->CXs[id].RX.empty())){//si hay datos en buffer RX ...
             num_buf_rx = KERNEL->CXs[id].RX.size();//lo hacemos porque si no variaria el size al hacer un splice
             for(indice=0; indice < num_buf_rx;indice++){
+                
+                //si la entidad remota hizo un DISCONNECT abrupto damos el error EXDISC
+                if(KERNEL->CXs[id].signal_disconnect == true) {
+                    desbloquear_acceso(&KERNEL->SEMAFORO);
+                    ltm_exit_kernel((void**) &KERNEL);
+                    return EXDISC;
+                }
+                
                 it_rx = KERNEL->CXs[id].RX.begin();
+                //miramos si es el ultimo pakete con CLOSE para avisar a la aplicacion
+                if (it_rx->pkt->cabecera.close == 1) {
+                    *flags = (*flags || CLOSE);
+                }
+                
                 it_libres = KERNEL->buffers_libres.begin();
                 //si de este buffer no quedan bytes lo pasamos a libres
                 if(it_rx->bytes_restan == 0){
@@ -446,8 +466,10 @@ size_t t_receive(int id, void *datos, size_t longitud, int8_t *flags) {
                         it_rx->ultimo_byte+=longitud+1;
                         datos_aux+=longitud;
                         datos_recibidos += longitud;
+                        datos_por_recibir -=longitud;
                     }else{//leemos todo el buffer de rx
                         memcpy(datos_aux, it_rx->ultimo_byte, it_rx->bytes_restan);
+                        datos_por_recibir -= it_rx->bytes_restan;
                         it_rx->bytes_restan-=it_rx->bytes_restan;
                         it_rx->ultimo_byte+=it_rx->bytes_restan;
                         datos_recibidos += it_rx->bytes_restan;
