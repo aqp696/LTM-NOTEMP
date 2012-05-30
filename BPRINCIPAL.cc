@@ -95,6 +95,7 @@ void bucle_principal(void) {
                 
                 //int rec = recibir_tpdu(pkt, MAX_LONG_PKT, &ip_remota, &offset);
                 int rec = recibir_tpdu(it_libres->pkt, MAX_LONG_PKT, &ip_remota, &offset);
+                fprintf(stderr,"\nrec: %d",rec);
                 if (rec >= 0) {
                     fprintf(stderr,"desde la IP %s\ntexto del mensaje: %s\n",
                             //inet_ntop(AF_INET, &ip_remota, ipcharbuf, 20), pkt + offset);
