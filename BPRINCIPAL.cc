@@ -102,8 +102,10 @@ void bucle_principal(void) {
                             inet_ntop(AF_INET, &ip_remota, ipcharbuf, 20), &(it_libres->pkt) + offset);
                 }
                 
+                fprintf(stderr,"\nHola!!!!");
                 //puntero_pkt = (tpdu *)(pkt+offset)
                 puntero_pkt = (tpdu *)(it_libres->pkt+offset);
+                fprintf(stderr,"\nHola2!!!!");
                 
                 bloquear_acceso(&KERNEL->SEMAFORO);
 
