@@ -268,14 +268,20 @@ void bucle_principal(void) {
                                 crear_pkt(it_libres->pkt,ACK,&tsap_destino,&tsap_origen,NULL,0,puntero_pkt->cabecera.id_destino,puntero_pkt->cabecera.id_local);
                                 KERNEL->CXs[puntero_pkt->cabecera.id_destino].numero_secuencia++;//incrementamos numero_secuencia
                                 enviar_tpdu(ip_remota,it_libres->pkt,sizeof(tpdu));
+                                
+                                //miramos si despertamos al receive
+                                if(KERNEL->CXs[puntero_pkt->cabecera.id_destino].primitiva_dormida == true){
+                                    desbloquear_acceso(&KERNEL->SEMAFORO);
+                                    despierta_conexion(&KERNEL->CXs[puntero_pkt->cabecera.id_destino].barC);
+                                }
                             }
                         }
                         break;
                         
                     case DR:
                         fprintf(stderr,"\nRecibido un DISCONECTION REQUEST");
-                        //actualizamos el estado de la conexion DEBERIAMOS TENER UN CLOSE_WAIT
-                        KERNEL->CXs[puntero_pkt->cabecera.id_destino].desconexion_remota = true;
+                        //avisamos en el KERNEL de que la entidad remota solicito un DISCONNECT
+                        KERNEL->CXs[puntero_pkt->cabecera.id_destino].signal_disconnect = true;
                         //rellenamos los tsaps
                         tsap_origen.ip.s_addr = KERNEL->CXs[puntero_pkt->cabecera.id_destino].ip_local.s_addr;
                         tsap_origen.puerto = puntero_pkt->cabecera.puerto_dest;
@@ -284,13 +290,26 @@ void bucle_principal(void) {
                         //construimos el paquete DC y enviamos
                         crear_pkt(&paquete,DC,&tsap_destino,&tsap_origen,NULL,0,puntero_pkt->cabecera.id_destino,puntero_pkt->cabecera.id_local);
                         enviar_tpdu(ip_remota,&paquete,sizeof(tpdu));
-
+                        //liberamos los recursos
+                        KERNEL->buffers_libres.splice(KERNEL->buffers_libres.begin(), KERNEL->CXs[puntero_pkt->cabecera.id_destino].TX);
+                        KERNEL->buffers_libres.splice(KERNEL->buffers_libres.begin(), KERNEL->CXs[puntero_pkt->cabecera.id_destino].RX);
+                        KERNEL->CXs[puntero_pkt->cabecera.id_destino].celda_ocupada = 0;
+                        KERNEL->CXs[puntero_pkt->cabecera.id_destino].estado_cx = CLOSED;
+                        //miramos si hay que despertar a la primitiva
+                        if(KERNEL->CXs[puntero_pkt->cabecera.id_destino].primitiva_dormida == true){
+                            desbloquear_acceso(&KERNEL->SEMAFORO);
+                            despierta_conexion(&KERNEL->CXs[puntero_pkt->cabecera.id_destino].barC);
+                            
+                        }
                         break;
                     case DC:
                         fprintf(stderr,"\nRecibido un DISCONECTION CONFIRM");
                         //???QUE HACER?
-                        //pasamos el buffer de TX a libres
+                        //liberamos los recursos
                         KERNEL->buffers_libres.splice(KERNEL->buffers_libres.begin(),KERNEL->CXs[puntero_pkt->cabecera.id_destino].TX);
+                        KERNEL->buffers_libres.splice(KERNEL->buffers_libres.begin(), KERNEL->CXs[puntero_pkt->cabecera.id_destino].RX);
+                        KERNEL->CXs[puntero_pkt->cabecera.id_destino].celda_ocupada = 0;
+                        KERNEL->CXs[puntero_pkt->cabecera.id_destino].estado_cx = CLOSED;
                         //liberamos la conexion
                         break;
 
