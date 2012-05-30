@@ -100,7 +100,7 @@ static int do_receiver_part(t_direccion *dir_local, t_direccion *dir_remota, cha
     do {
 
         len1 = t_receive(cx1, buf, bs, &flags);
-        fprintf(stderr,"\nterminado un receive");
+        fprintf(stderr,"\nterminado un receive, len1: %d",len1);
 
         if (len1 > 0 ) {
             bytesrecibidos += len1;
