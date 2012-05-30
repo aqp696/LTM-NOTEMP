@@ -457,6 +457,7 @@ size_t t_receive(int id, void *datos, size_t longitud, int8_t *flags) {
                 }
                 
                 it_rx = KERNEL->CXs[id].RX.begin();
+                fprintf(stderr,"\nit_rx->pkt->cabecera.close: %d",it_rx->pkt->cabecera.close);
                 
                 fprintf(stderr,"\nRECEIVE: Miramos si cabecera.close=1");
                 //miramos si es el ultimo pakete con CLOSE para avisar a la aplicacion
