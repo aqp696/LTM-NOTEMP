@@ -461,6 +461,7 @@ size_t t_receive(int id, void *datos, size_t longitud, int8_t *flags) {
                 fprintf(stderr,"\nRECEIVE: Miramos si cabecera.close=1");
                 //miramos si es el ultimo pakete con CLOSE para avisar a la aplicacion
                 if (it_rx->pkt->cabecera.close == 1) {
+                    fprintf(stderr,"\nRECEIVE: casca al comprobar la cabecera.close=1");
                     *flags = (*flags || CLOSE);
                 }
                 
