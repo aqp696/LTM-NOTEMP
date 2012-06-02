@@ -511,7 +511,7 @@ size_t t_receive(int id, void *datos, size_t longitud, int8_t *flags) {
         }
     }
     // ..... aqui vuestro codigo
-
+    desbloquear_acceso(&KERNEL->SEMAFORO);
     ltm_exit_kernel((void**) & KERNEL);
     return datos_recibidos;
 }
