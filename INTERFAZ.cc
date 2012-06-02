@@ -271,6 +271,7 @@ int t_disconnect(int id) {
 }
 
 size_t t_send(int id, const void *datos, size_t longitud, int8_t *flags) {
+    bloquear_acceso(&KERNEL->SEMAFORO);
     int tamanho = MAX_DATOS; //inicializamos tamanho al máximo
     //int res = EXOK;
     
@@ -288,7 +289,7 @@ size_t t_send(int id, const void *datos, size_t longitud, int8_t *flags) {
     }
     
     //miramos si existe la conexion establecida
-    bloquear_acceso(&KERNEL->SEMAFORO);
+    //bloquear_acceso(&KERNEL->SEMAFORO);
     if(KERNEL->CXs[id].estado_cx != ESTABLISHED){
         desbloquear_acceso(&KERNEL->SEMAFORO);
         ltm_exit_kernel((void**)&KERNEL);
@@ -406,6 +407,7 @@ size_t t_send(int id, const void *datos, size_t longitud, int8_t *flags) {
 }
 
 size_t t_receive(int id, void *datos, size_t longitud, int8_t *flags) {
+    bloquear_acceso(&KERNEL->SEMAFORO);
     char *datos_aux =(char *) datos;
     fprintf(stderr,"\nRECEIVE: receive de longitud: %d",longitud);
     fprintf(stderr,"\nRECEIVE: obtenemos el kernel");
@@ -423,7 +425,7 @@ size_t t_receive(int id, void *datos, size_t longitud, int8_t *flags) {
     
     fprintf(stderr,"\nRECEIVE: miramos si la conexion esta ESTABLISHED");
     //miramos si existe la conexion establecida
-    bloquear_acceso(&KERNEL->SEMAFORO);
+    //bloquear_acceso(&KERNEL->SEMAFORO);
     if(KERNEL->CXs[id].estado_cx != ESTABLISHED){
         desbloquear_acceso(&KERNEL->SEMAFORO);
         ltm_exit_kernel((void**)&KERNEL);
