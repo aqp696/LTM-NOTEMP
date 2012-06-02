@@ -22,18 +22,21 @@ int t_connect(const t_direccion *tsap_destino, t_direccion *tsap_origen) {
     int er = ltm_get_kernel(dir_proto, (void**) & KERNEL);
     if (er < 0)
         return EXKERNEL;
-
+    
+    bloquear_acceso(&KERNEL->SEMAFORO);
+    
     fprintf(stderr,"\nComprobamos parametros");
     // comprobar parametros
     if (comprobar_parametros(tsap_destino,tsap_origen,'c') == -1) {
         fprintf(stderr,"\nTSAPS incorrecto");
+        desbloquear_acceso(&KERNEL->SEMAFORO);
         ltm_exit_kernel((void**) &KERNEL);
         return EXINVA;
     }
     
     pid_t pid = gettid();
 
-    bloquear_acceso(&KERNEL->SEMAFORO);
+    //bloquear_acceso(&KERNEL->SEMAFORO);
 
     fprintf(stderr,"\nMiramos si hay espacio para una nueva conexion");
     //miramos si hay espacio para una nueva conexion
@@ -126,17 +129,19 @@ int t_listen(t_direccion *tsap_escucha, t_direccion *tsap_remota) {
     if (er < 0)
         return EXKERNEL;
 
+    bloquear_acceso(&KERNEL->SEMAFORO);
     fprintf(stderr,"\nComprobamos parametros del listen");
     // comprobar parametros metele ip local
     if (comprobar_parametros(tsap_remota, tsap_escucha, 'l') == -1) {
         fprintf(stderr, "\nTSAPS incorrecto");
+        desbloquear_acceso(&KERNEL->SEMAFORO);
         ltm_exit_kernel((void**) &KERNEL);
         return EXINVA;
     }
     
         pid_t pid = gettid();
 
-    bloquear_acceso(&KERNEL->SEMAFORO);
+    //bloquear_acceso(&KERNEL->SEMAFORO);
     fprintf(stderr,"\nMiramos si hay espacio para una nueva conexion");
     //miramos si hay espacio para una nueva conexion
     if (KERNEL->num_CXs == NUM_MAX_CXs) {
@@ -271,7 +276,6 @@ int t_disconnect(int id) {
 }
 
 size_t t_send(int id, const void *datos, size_t longitud, int8_t *flags) {
-    bloquear_acceso(&KERNEL->SEMAFORO);
     int tamanho = MAX_DATOS; //inicializamos tamanho al máximo
     //int res = EXOK;
     
@@ -280,10 +284,13 @@ size_t t_send(int id, const void *datos, size_t longitud, int8_t *flags) {
     if (er < 0)
         return EXKERNEL;
     
+    bloquear_acceso(&KERNEL->SEMAFORO);
+    
     char *puntero_datos = (char *)datos;
 
     //miramos si hay datos disponibles
     if(datos == NULL){
+        desbloquear_acceso(&KERNEL->SEMAFORO);
         ltm_exit_kernel((void**)&KERNEL);
         return EXNODATA;
     }
@@ -407,7 +414,6 @@ size_t t_send(int id, const void *datos, size_t longitud, int8_t *flags) {
 }
 
 size_t t_receive(int id, void *datos, size_t longitud, int8_t *flags) {
-    bloquear_acceso(&KERNEL->SEMAFORO);
     char *datos_aux =(char *) datos;
     fprintf(stderr,"\nRECEIVE: receive de longitud: %d",longitud);
     fprintf(stderr,"\nRECEIVE: obtenemos el kernel");
@@ -416,16 +422,18 @@ size_t t_receive(int id, void *datos, size_t longitud, int8_t *flags) {
     if (er < 0)
         return EXKERNEL;
     
+    bloquear_acceso(&KERNEL->SEMAFORO);
+    
     fprintf(stderr,"\nRECEIVE: miramos si datos==NULL");
     //miramos si hay datos disponibles
     if((datos == NULL)||(longitud < 0)){
+        desbloquear_acceso(&KERNEL->SEMAFORO);
         ltm_exit_kernel((void**)&KERNEL);
         return EXINVA;
     }
     
     fprintf(stderr,"\nRECEIVE: miramos si la conexion esta ESTABLISHED");
     //miramos si existe la conexion establecida
-    //bloquear_acceso(&KERNEL->SEMAFORO);
     if(KERNEL->CXs[id].estado_cx != ESTABLISHED){
         desbloquear_acceso(&KERNEL->SEMAFORO);
         ltm_exit_kernel((void**)&KERNEL);
