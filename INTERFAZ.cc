@@ -286,7 +286,7 @@ size_t t_send(int id, const void *datos, size_t longitud, int8_t *flags) {
     
     bloquear_acceso(&KERNEL->SEMAFORO);
     
-    char *puntero_datos = (char *)datos;
+    void *puntero_datos = (void *)datos;
 
     //miramos si hay datos disponibles
     if(datos == NULL){
