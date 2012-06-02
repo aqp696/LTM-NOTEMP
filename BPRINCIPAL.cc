@@ -58,7 +58,7 @@ void bucle_principal(void) {
         INICIA_LISTA(KERNEL->CXs[i].RX,buf_pkt);
     }
     inicia_barrera(&KERNEL->barrera);
-
+    
     INICIA_LISTA(KERNEL->buffers_libres, buf_pkt);
     //Inicializamos la lista de conexiones libres
     INICIA_LISTA(KERNEL->CXs_libres, int);
@@ -75,13 +75,13 @@ void bucle_principal(void) {
         switch (ltm_wait4event(shortest)) {
 
             case TIME_OUT:
-                bloquear_acceso(&KERNEL->SEMAFORO);
+                //bloquear_acceso(&KERNEL->SEMAFORO);
                 fprintf(stderr, "El protocolo despierta por TMOUT (hora %ld)\n", time(0));
 
                 break;
 
             case INTERRUP:
-                bloquear_acceso(&KERNEL->SEMAFORO);
+                //bloquear_acceso(&KERNEL->SEMAFORO);
                 break;
 
             case PAQUETE:  
@@ -139,6 +139,7 @@ void bucle_principal(void) {
                         fprintf(stderr,"\nid_estino es: %d",puntero_pkt->cabecera.id_local);
                         fprintf(stderr,"\nid_local es: %d",puntero_pkt->cabecera.id_destino);
                         despierta_conexion(&KERNEL->CXs[puntero_pkt->cabecera.id_destino].barC);
+                        bloquear_acceso(&KERNEL->SEMAFORO);//por si acaso
                         break;
                         
                     case CR:
@@ -201,6 +202,7 @@ void bucle_principal(void) {
                          //desbloquear_acceso(&KERNEL->SEMAFORO);
                          //despierta_conexion(&KERNEL->barrera);
                          fprintf(stderr,"\nDespertamos conexion\n");
+                         bloquear_acceso(&KERNEL->SEMAFORO);
                         break;
                     case ACK:
                         fprintf(stderr,"\nRecibido un ACK");
@@ -249,6 +251,7 @@ void bucle_principal(void) {
                                     KERNEL->CXs[puntero_pkt->cabecera.id_destino].primitiva_dormida = false;
                                     desbloquear_acceso(&KERNEL->SEMAFORO);
                                     despierta_conexion(&KERNEL->CXs[puntero_pkt->cabecera.id_destino].barC);
+                                    bloquear_acceso(&KERNEL->SEMAFORO);
                                 }
                             }        
                        }
@@ -299,6 +302,7 @@ void bucle_principal(void) {
                                     KERNEL->CXs[puntero_pkt->cabecera.id_destino].primitiva_dormida = false;
                                     desbloquear_acceso(&KERNEL->SEMAFORO);
                                     despierta_conexion(&KERNEL->CXs[puntero_pkt->cabecera.id_destino].barC);
+                                    bloquear_acceso(&KERNEL->SEMAFORO);
                                 }
                             }
                         }
@@ -326,6 +330,7 @@ void bucle_principal(void) {
                             KERNEL->CXs[puntero_pkt->cabecera.id_destino].primitiva_dormida = false;
                             desbloquear_acceso(&KERNEL->SEMAFORO);
                             despierta_conexion(&KERNEL->CXs[puntero_pkt->cabecera.id_destino].barC);
+                            bloquear_acceso(&KERNEL->SEMAFORO);
                             
                         }
                         break;
