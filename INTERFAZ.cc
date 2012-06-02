@@ -92,6 +92,7 @@ int t_connect(const t_direccion *tsap_destino, t_direccion *tsap_origen) {
     fprintf(stderr,"\nvamos a llamar a crear_pkt");
     crear_pkt(it_tx->pkt,CR,&tsap_destino_aux,tsap_origen,NULL,0,indice_celda,0);
     fprintf(stderr,"\nEnviamos el pakete y nos bloqueamos");
+    fprintf(stderr,"\nit_tx->pkt->cabecera.num_secuencia",it_tx->pkt->cabecera.numero_secuencia);
     //enviamos el paquete y nos bloqueamos
     enviar_tpdu(tsap_destino->ip,it_tx->pkt,sizeof(tpdu));
     fprintf(stderr,"\nla id_local es: %d",indice_celda);
