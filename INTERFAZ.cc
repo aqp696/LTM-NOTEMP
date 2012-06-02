@@ -355,7 +355,8 @@ size_t t_send(int id, const void *datos, size_t longitud, int8_t *flags) {
             fprintf(stderr,"\nSEND: hay espacio en el buffer de TX");
             //buscamos un buffer_libre
             it_libres = buscar_buffer_libre();
-            memcpy(it_libres->pkt->datos,puntero_datos,tamanho);
+            //it_libres->pkt = (tpdu *)(it_libres->contenedor);
+            //memcpy(it_libres->pkt->datos,puntero_datos,tamanho);
             fprintf(stderr,"\nSEND: copiamos los datos a it_libres");
             puntero_datos = puntero_datos + tamanho;
             it_tx = KERNEL->CXs[id].TX.end();
@@ -364,7 +365,7 @@ size_t t_send(int id, const void *datos, size_t longitud, int8_t *flags) {
             it_tx = --KERNEL->CXs[id].TX.end();
             
             //creamos el pakete y lo enviamos, crear_pkt pone cabecera.close=0 por defecto
-            crear_pkt(it_tx->pkt,DATOS,&tsap_destino,&tsap_origen,it_tx->pkt->datos,tamanho,id,KERNEL->CXs[id].id_destino);
+            crear_pkt(it_tx->pkt,DATOS,&tsap_destino,&tsap_origen,puntero_datos,tamanho,id,KERNEL->CXs[id].id_destino);
             fprintf(stderr,"\nSEND: creado el pakete de DATOS");
                         //si es el ultimo PKT miramos si FLAGS = SEND_CLOSE
             if((numero_sends == 1)&&(((*flags)&CLOSE) == CLOSE) ){
