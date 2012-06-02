@@ -213,31 +213,31 @@ void bucle_principal(void) {
                                 KERNEL->buffers_libres.splice(it_libres,KERNEL->CXs[puntero_pkt->cabecera.id_destino].TX,it_tx);
                                 it_tx++;//avanzamos el iterador al siguiente buffer de TX
                                 
-                                //miramos si hay que mandar un DR
-                                if((KERNEL->CXs[puntero_pkt->cabecera.id_destino].TX.empty())
-                                        &&(KERNEL->CXs[puntero_pkt->cabecera.id_destino].signal_disconnect == true)) {
-                                    //rellenamos datos de los TSAPs
-                                    //t_direccion tsap_origen, tsap_destino;
-                                    tsap_origen.ip.s_addr = KERNEL->CXs[puntero_pkt->cabecera.id_destino].ip_local.s_addr;
-                                    tsap_origen.puerto = puntero_pkt->cabecera.puerto_dest;
-                                    tsap_destino.ip.s_addr = ip_remota.s_addr;
-                                    tsap_destino.puerto = puntero_pkt->cabecera.puerto_orig;
-                                    
-                                    //mandamos el DR a través del buffer TX
-                                    it_libres = buscar_buffer_libre();
-                                    it_tx = KERNEL->CXs[puntero_pkt->cabecera.id_destino].TX.end();
-                                    KERNEL->CXs[puntero_pkt->cabecera.id_destino].TX.splice(it_tx, KERNEL->buffers_libres, it_libres);
-                                    it_tx = --KERNEL->CXs[puntero_pkt->cabecera.id_destino].TX.end();
-                                    crear_pkt(it_tx->pkt, DR, &tsap_destino, &tsap_origen, NULL, 0, puntero_pkt->cabecera.id_destino, puntero_pkt->cabecera.id_local);
-                                    enviar_tpdu(tsap_destino.ip, it_tx->pkt, sizeof (tpdu));
-                                    
-                                    //ahora hay que avisar al send si esta dormido, que de un EXCLOSE
-                                    if(KERNEL->CXs[puntero_pkt->cabecera.id_destino].primitiva_dormida == true){
-                                        KERNEL->CXs[puntero_pkt->cabecera.id_destino].primitiva_dormida = false;
-                                        desbloquear_acceso(&KERNEL->SEMAFORO);
-                                        despierta_conexion(&KERNEL->CXs[puntero_pkt->cabecera.id_destino].barC);
-                                    }
-                                }
+//                                //miramos si hay que mandar un DR
+//                                if((KERNEL->CXs[puntero_pkt->cabecera.id_destino].TX.empty())
+//                                        &&(KERNEL->CXs[puntero_pkt->cabecera.id_destino].signal_disconnect == true)) {
+//                                    //rellenamos datos de los TSAPs
+//                                    //t_direccion tsap_origen, tsap_destino;
+//                                    tsap_origen.ip.s_addr = KERNEL->CXs[puntero_pkt->cabecera.id_destino].ip_local.s_addr;
+//                                    tsap_origen.puerto = puntero_pkt->cabecera.puerto_dest;
+//                                    tsap_destino.ip.s_addr = ip_remota.s_addr;
+//                                    tsap_destino.puerto = puntero_pkt->cabecera.puerto_orig;
+//                                    
+//                                    //mandamos el DR a través del buffer TX
+//                                    it_libres = buscar_buffer_libre();
+//                                    it_tx = KERNEL->CXs[puntero_pkt->cabecera.id_destino].TX.end();
+//                                    KERNEL->CXs[puntero_pkt->cabecera.id_destino].TX.splice(it_tx, KERNEL->buffers_libres, it_libres);
+//                                    it_tx = --KERNEL->CXs[puntero_pkt->cabecera.id_destino].TX.end();
+//                                    crear_pkt(it_tx->pkt, DR, &tsap_destino, &tsap_origen, NULL, 0, puntero_pkt->cabecera.id_destino, puntero_pkt->cabecera.id_local);
+//                                    enviar_tpdu(tsap_destino.ip, it_tx->pkt, sizeof (tpdu));
+//                                    
+//                                    //ahora hay que avisar al send si esta dormido, que de un EXCLOSE
+//                                    if(KERNEL->CXs[puntero_pkt->cabecera.id_destino].primitiva_dormida == true){
+//                                        KERNEL->CXs[puntero_pkt->cabecera.id_destino].primitiva_dormida = false;
+//                                        desbloquear_acceso(&KERNEL->SEMAFORO);
+//                                        despierta_conexion(&KERNEL->CXs[puntero_pkt->cabecera.id_destino].barC);
+//                                    }
+//                                }
                                 
                                 //DESPUES DE MANDAR EL DR no despuerto  SEND porque habrá finalizado con EXDISC
                                 
