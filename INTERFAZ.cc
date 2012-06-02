@@ -357,8 +357,8 @@ size_t t_send(int id, const void *datos, size_t longitud, int8_t *flags) {
             it_libres = buscar_buffer_libre();
             //it_libres->pkt = (tpdu *)(it_libres->contenedor);
             //memcpy(it_libres->pkt->datos,puntero_datos,tamanho);
-            fprintf(stderr,"\nSEND: copiamos los datos a it_libres");
-            puntero_datos = puntero_datos + tamanho;
+            //fprintf(stderr,"\nSEND: copiamos los datos a it_libres");
+            //puntero_datos = puntero_datos + tamanho;
             it_tx = KERNEL->CXs[id].TX.end();
             KERNEL->CXs[id].TX.splice(it_tx,KERNEL->buffers_libres,it_libres);
             fprintf(stderr,"\nSEND: pasamos el buffer a la lista de TX");
@@ -383,8 +383,9 @@ size_t t_send(int id, const void *datos, size_t longitud, int8_t *flags) {
             it_tx->num_secuencia = KERNEL->CXs[id].numero_secuencia;
             KERNEL->CXs[id].numero_secuencia++;
             numero_sends--;
+            puntero_datos = puntero_datos+tamanho;
             datos_a_transmitir-=tamanho;//tamanho vale MAX_DATOS
-            datos_enviados+=tamanho;
+            datos_enviados+=tamanho;            
             if(numero_sends == 1){
                 //ULTIMO PKT-> actualizamos tamanho
                 tamanho = datos_a_transmitir;
