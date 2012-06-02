@@ -240,7 +240,7 @@ void bucle_principal(void) {
 //                                        despierta_conexion(&KERNEL->CXs[puntero_pkt->cabecera.id_destino].barC);
 //                                    }
 //                                }
-                                
+                            
                                 //DESPUES DE MANDAR EL DR no despuerto  SEND porque habrá finalizado con EXDISC
                                 
                                 //si hay HUECO en buffer TX llamamos a la primitiva si no hay un DISCONNECT

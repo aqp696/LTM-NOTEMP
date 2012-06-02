@@ -453,7 +453,7 @@ size_t t_receive(int id, void *datos, size_t longitud, int8_t *flags) {
     //nos disponemos a recibir
     while(datos_por_recibir > 0){
         if(!(KERNEL->CXs[id].RX.empty())){//si hay datos en buffer RX ...
-            fprintf(stderr,"\nRECEIVE: el buffer de RX no esta vacio");
+            fprintf(stderr,"\nRECEIVE: el buffer de RX no esta vacio, tamanho: %d",KERNEL->CXs[id].RX.size());
             num_buf_rx = KERNEL->CXs[id].RX.size();//lo hacemos porque si no variaria el size al hacer un splice
             for(indice=0; indice < num_buf_rx;indice++){
                 fprintf(stderr,"\nRECEIVE: miramos si la entidad remota hizo un DISCONNECT");
