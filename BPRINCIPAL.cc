@@ -248,6 +248,7 @@ void bucle_principal(void) {
                                 //si hay HUECO en buffer TX llamamos a la primitiva si no hay un DISCONNECT
                                 if((KERNEL->CXs[puntero_pkt->cabecera.id_destino].primitiva_dormida == true)
                                         &&(KERNEL->CXs[puntero_pkt->cabecera.id_destino].signal_disconnect==false)){
+                                    fprintf(stderr,"\nBPRINCIPAL: recibido ACK y despertamos al send");
                                     KERNEL->CXs[puntero_pkt->cabecera.id_destino].primitiva_dormida = false;
                                     desbloquear_acceso(&KERNEL->SEMAFORO);
                                     despierta_conexion(&KERNEL->CXs[puntero_pkt->cabecera.id_destino].barC);
@@ -255,6 +256,7 @@ void bucle_principal(void) {
                                 }
                             }        
                        }
+                        fprintf(stderr,"\nBPRINCIPAL: salimos del case ACK");
                         break;
                         
                     case DATOS:
