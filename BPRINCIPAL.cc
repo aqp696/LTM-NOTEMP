@@ -68,18 +68,20 @@ void bucle_principal(void) {
     gettimeofday(&tv,NULL);
     KERNEL->t_inicio = tv.tv_sec*1000+tv.tv_usec/1000;
     
-    desbloquear_acceso(&KERNEL->SEMAFORO);
+    //desbloquear_acceso(&KERNEL->SEMAFORO);
 
     do {
-
+        desbloquear_acceso(&KERNEL->SEMAFORO);
         switch (ltm_wait4event(shortest)) {
 
             case TIME_OUT:
+                bloquear_acceso(&KERNEL->SEMAFORO);
                 fprintf(stderr, "El protocolo despierta por TMOUT (hora %ld)\n", time(0));
 
                 break;
 
             case INTERRUP:
+                bloquear_acceso(&KERNEL->SEMAFORO);
                 break;
 
             case PAQUETE:  
