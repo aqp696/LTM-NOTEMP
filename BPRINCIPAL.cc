@@ -82,8 +82,9 @@ void bucle_principal(void) {
             case INTERRUP:
                 break;
 
-            case PAQUETE:                
+            case PAQUETE:  
                 fprintf(stderr,"\n (%d) Se ha recibido un PAQUETE ", cont + 1);
+                bloquear_acceso(&KERNEL->SEMAFORO);
                                 
                 list<buf_pkt, shm_Allocator<buf_pkt> >::iterator it_buffer;
                 list<buf_pkt, shm_Allocator<buf_pkt> >::iterator it_libres;
@@ -107,7 +108,7 @@ void bucle_principal(void) {
                 puntero_pkt = (tpdu *)(it_libres->contenedor+offset);
                 fprintf(stderr,"\nHola2!!!!");
                 
-                bloquear_acceso(&KERNEL->SEMAFORO);
+                //bloquear_acceso(&KERNEL->SEMAFORO);
 
                 
                 switch(puntero_pkt->cabecera.tipo){
