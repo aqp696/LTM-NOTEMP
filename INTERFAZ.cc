@@ -363,7 +363,7 @@ size_t t_send(int id, const void *datos, size_t longitud, int8_t *flags) {
             KERNEL->CXs[id].TX.splice(it_tx,KERNEL->buffers_libres,it_libres);
             fprintf(stderr,"\nSEND: pasamos el buffer a la lista de TX");
             it_tx = --KERNEL->CXs[id].TX.end();
-            
+            it_tx->pkt = (tpdu *)(it_tx->contenedor);
             //creamos el pakete y lo enviamos, crear_pkt pone cabecera.close=0 por defecto
             crear_pkt(it_tx->pkt,DATOS,&tsap_destino,&tsap_origen,puntero_datos,tamanho,id,KERNEL->CXs[id].id_destino);
             fprintf(stderr,"\nSEND: creado el pakete de DATOS");
