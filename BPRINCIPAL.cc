@@ -275,7 +275,6 @@ void bucle_principal(void) {
                                 it_rx = KERNEL->CXs[puntero_pkt->cabecera.id_destino].RX.end();
                                 KERNEL->CXs[puntero_pkt->cabecera.id_destino].RX.splice(it_rx,KERNEL->buffers_libres,it_libres);
                                 fprintf(stderr,"\nBPRINCIPAL: pasamos el buffer de libres a recepcion");
-                                fprintf(stderr,"\nBPRINCIPAL: it_rx->pkt->datos %s",it_rx->pkt->datos);
                                 //rellenamos datos de los TSAPs
                                 //t_direccion tsap_origen, tsap_destino;
                                 tsap_origen.ip.s_addr = KERNEL->CXs[puntero_pkt->cabecera.id_destino].ip_local.s_addr;
