@@ -407,7 +407,7 @@ size_t t_send(int id, const void *datos, size_t longitud, int8_t *flags) {
 
 size_t t_receive(int id, void *datos, size_t longitud, int8_t *flags) {
     char *datos_aux =(char *) datos;
-    
+    fprintf(stderr,"\nRECEIVE: receive de longitud: %d",longitud);
     fprintf(stderr,"\nRECEIVE: obtenemos el kernel");
     //obtenemos el KERNEL
     int er = ltm_get_kernel(dir_proto, (void**) & KERNEL);
