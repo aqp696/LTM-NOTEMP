@@ -302,7 +302,7 @@ void bucle_principal(void) {
                                 if(KERNEL->CXs[puntero_pkt->cabecera.id_destino].primitiva_dormida == true){
                                     KERNEL->CXs[puntero_pkt->cabecera.id_destino].primitiva_dormida = false;
                                     fprintf(stderr,"\nBRPINCIPAL: despertamos al receive");
-                                    KERNEL->CXs[puntero_pkt->cabecera.id_destino].primitiva_dormida = false;
+                                    //KERNEL->CXs[puntero_pkt->cabecera.id_destino].primitiva_dormida = false;
                                     desbloquear_acceso(&KERNEL->SEMAFORO);
                                     despierta_conexion(&KERNEL->CXs[puntero_pkt->cabecera.id_destino].barC);
                                     bloquear_acceso(&KERNEL->SEMAFORO);
