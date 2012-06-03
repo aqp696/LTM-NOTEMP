@@ -486,31 +486,50 @@ size_t t_receive(int id, void *datos, size_t longitud, int8_t *flags) {
                     fprintf(stderr,"\nRECEIVE: casca al comprobar la cabecera.close=1");
                     *flags = (*flags || CLOSE);
                 }
-                
-                it_libres = KERNEL->buffers_libres.begin();
-                //si de este buffer no quedan bytes lo pasamos a libres
-                if(it_rx->bytes_restan == 0){
-                    fprintf(stderr,"\nRECEIVE: el buffer ya no tiene mas datos, lo pasamos a LIBRES");
-                    KERNEL->buffers_libres.splice(it_libres,KERNEL->CXs[id].RX,it_rx);
-                }else {//si no copiamos
-                    fprintf(stderr,"\nRECEIVE: el buffer aun contiene datos");
-                    if (it_rx->bytes_restan > longitud) { //leemos lo que podamos del buffer de rx
-                        memcpy(datos_aux, it_rx->ultimo_byte, longitud);
-                        fprintf(stderr,"\nRECEIVE: bytes_restan>longitud -> copiados los datos del buffer");
-                        it_rx->bytes_restan -= longitud;
-                        it_rx->ultimo_byte+=longitud+1;
-                        datos_aux+=longitud;
-                        datos_recibidos += longitud;
-                        datos_por_recibir -=longitud;
-                    }else{//leemos todo el buffer de rx
-                        memcpy(datos_aux, it_rx->ultimo_byte, it_rx->bytes_restan);
-                        fprintf(stderr,"\nRECEIVE: bytes_restan<=longitud -> copiados los datos del buffer");
-                        datos_por_recibir -= it_rx->bytes_restan;
-                        it_rx->bytes_restan-=it_rx->bytes_restan;
-                        it_rx->ultimo_byte+=it_rx->bytes_restan;
-                        datos_recibidos += it_rx->bytes_restan;
-                    }
+                //VERSION NUEVA!!!
+                if(it_rx->bytes_restan > longitud){//leemos lo que podamos del buffer de rx
+                    memcpy(datos_aux,it_rx->ultimo_byte, longitud);
+                    fprintf(stderr,"\nRECEIVE: bytes_restan>longitud -> copiados los datos del buffer");
+                    it_rx->bytes_restan -= longitud;
+                    it_rx->ultimo_byte+=longitud;
+                    datos_aux+=longitud;
+                    datos_recibidos+=longitud;
+                    datos_por_recibir-=longitud;
+                }else{//leemos todo el buffer de rx
+                    memcpy(datos_aux,it_rx->ultimo_byte,it_rx->bytes_restan);
+                    fprintf(stderr,"\nRECEIVE: bytes_restan<=longitud->copiados los datos del buffer");
+                    datos_por_recibir -= it_rx->bytes_restan;
+                    it_rx->bytes_restan -= it_rx->bytes_restan;
+                    it_rx->ultimo_byte+=it_rx->bytes_restan;
+                    datos_recibidos += it_rx->bytes_restan;
                 }
+                //MANTENER POR SI ACASO->miramos si restan=0, en la otra version nunca restan=0!!!!!!!!!!!!!!!!!
+//                it_libres = KERNEL->buffers_libres.begin();
+//                //si de este buffer no quedan bytes lo pasamos a libres
+//                if(it_rx->bytes_restan == 0){
+//                    fprintf(stderr,"\nRECEIVE: el buffer ya no tiene mas datos, lo pasamos a LIBRES");
+//                    KERNEL->buffers_libres.splice(it_libres,KERNEL->CXs[id].RX,it_rx);
+//                }else {//si no copiamos
+//                    fprintf(stderr,"\nRECEIVE: el buffer aun contiene datos");
+//                    if (it_rx->bytes_restan > longitud) { //leemos lo que podamos del buffer de rx
+//                        memcpy(datos_aux, it_rx->ultimo_byte, longitud);
+//                        fprintf(stderr,"\nRECEIVE: bytes_restan>longitud -> copiados los datos del buffer");
+//                        it_rx->bytes_restan -= longitud;
+//                        it_rx->ultimo_byte+=longitud+1;
+//                        datos_aux+=longitud;
+//                        datos_recibidos += longitud;
+//                        datos_por_recibir -=longitud;
+//                    }else{//leemos todo el buffer de rx
+//                        memcpy(datos_aux, it_rx->ultimo_byte, it_rx->bytes_restan);
+//                        fprintf(stderr,"\nRECEIVE: bytes_restan<=longitud -> copiados los datos del buffer");
+//                        datos_por_recibir -= it_rx->bytes_restan;
+//                        it_rx->bytes_restan-=it_rx->bytes_restan;
+//                        it_rx->ultimo_byte+=it_rx->bytes_restan;
+//                        datos_recibidos += it_rx->bytes_restan;
+//                    }
+//                }
+                //actualizamos el indice
+                indice++;
             }
         }else{//si no hay datos en buffer RX-> DORMIRSE
             fprintf(stderr, "RECEIVE: el buffer de recepcion esta vacio, nos dormimos");
