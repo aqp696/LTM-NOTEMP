@@ -93,6 +93,9 @@ int t_connect(const t_direccion *tsap_destino, t_direccion *tsap_origen) {
     crear_pkt(it_tx->pkt,CR,&tsap_destino_aux,tsap_origen,NULL,0,indice_celda,0);
     fprintf(stderr,"\nEnviamos el pakete y nos bloqueamos");
     fprintf(stderr,"\nit_tx->pkt->cabecera.num_secuencia: %d",it_tx->pkt->cabecera.numero_secuencia);
+    //pruebas
+    it_tx = --KERNEL->CXs[indice_celda].TX.end();
+    fprintf(stderr,"\nvolvemos al it_tx-> it_tx->pkt->cabecera.num_secuencia: %d",it_tx->pkt->cabecera.numero_secuencia);
     //enviamos el paquete y nos bloqueamos
     enviar_tpdu(tsap_destino->ip,it_tx->pkt,sizeof(tpdu));
     fprintf(stderr,"\nla id_local es: %d",indice_celda);
@@ -502,6 +505,9 @@ size_t t_receive(int id, void *datos, size_t longitud, int8_t *flags) {
                     it_rx->bytes_restan -= it_rx->bytes_restan;
                     it_rx->ultimo_byte+=it_rx->bytes_restan;
                     datos_recibidos += it_rx->bytes_restan;
+                    //pasamos el buffer de rx a libres
+                    it_libres = KERNEL->buffers_libres.begin();
+                    KERNEL->buffers_libres.splice(it_libres,KERNEL->CXs[id].RX,it_rx);
                 }
                 //MANTENER POR SI ACASO->miramos si restan=0, en la otra version nunca restan=0!!!!!!!!!!!!!!!!!
 //                it_libres = KERNEL->buffers_libres.begin();
