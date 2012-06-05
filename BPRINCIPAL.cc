@@ -127,17 +127,11 @@ void bucle_principal(void) {
                             fprintf(stderr,"\nRecibido CCPositivo ESTABLISHED");
                             KERNEL->CXs[puntero_pkt->cabecera.id_destino].estado_cx = ESTABLISHED;
                             KERNEL->CXs[puntero_pkt->cabecera.id_destino].id_destino = puntero_pkt->cabecera.id_local;
-                            KERNEL->CXs[puntero_pkt->cabecera.id_destino].resultado_peticion=EXOK;
-                            //it_libres = KERNEL->buffers_libres.begin();
-                            //fprintf(stderr,"\nBPRINCIPAL: it_libres->num_secuencia: %d",it_libres->num_secuencia);
-                            
-                            //fprintf(stderr,"\nBPRINCIPAL: it_libres->pkt->cabecera.numero_secuencia: %d",it_libres->pkt->cabecera.numero_secuencia);
+                            KERNEL->CXs[puntero_pkt->cabecera.id_destino].resultado_peticion=EXOK;                            
                             //kitamos del buffer de TX el pkt CR
                             it_libres = KERNEL->buffers_libres.end();
                             it_tx = --KERNEL->CXs[puntero_pkt->cabecera.id_destino].TX.end();
-                            //fprintf(stderr,"\nBPRINCIPAL: it_tx->num_secuencia: %d",it_tx->num_secuencia);
-                            //puntero_pkt_aux = (tpdu *)(it_tx->contenedor);
-                            //it_tx->pkt = (tpdu *)it_tx->contenedor;//si kito esta linea segmentation fault, lo malo es que num_secuencia es aleatorio
+                            it_tx->pkt = (tpdu *)(it_tx->contenedor);
                             fprintf(stderr,"\nBPRINCIPAL: it_tx->pkt->cabecera.numero_secuencia: %d",it_tx->pkt->cabecera.numero_secuencia);
                             KERNEL->buffers_libres.splice(it_libres,KERNEL->CXs[puntero_pkt->cabecera.id_destino].TX,it_tx);
                             //iniciamos el NUMERO DE SECUENCIA para esta conexion

@@ -85,6 +85,7 @@ int t_connect(const t_direccion *tsap_destino, t_direccion *tsap_origen) {
     KERNEL->CXs[indice_celda].TX.splice(it_tx,KERNEL->buffers_libres,it_buffer);
     fprintf(stderr,"\nya hicimos el splice");
     it_tx = --KERNEL->CXs[indice_celda].TX.end();//"--" se hace para que apunte al ultimo elemento, y no al vacio
+    //it_tx->pkt = (tpdu *)(it_tx->contenedor);
     fprintf(stderr,"\nit_tx->contador_rtx: %d",it_tx->contador_rtx);
     fprintf(stderr,"\nit_buffer->contador_rtx: %d",it_buffer->contador_rtx);
 
@@ -95,6 +96,7 @@ int t_connect(const t_direccion *tsap_destino, t_direccion *tsap_origen) {
     fprintf(stderr,"\nit_tx->pkt->cabecera.num_secuencia: %d",it_tx->pkt->cabecera.numero_secuencia);
     //pruebas
     it_tx = --KERNEL->CXs[indice_celda].TX.end();
+    //it_tx->pkt=(tpdu *)(it_tx->contenedor);
     fprintf(stderr,"\nvolvemos al it_tx-> it_tx->pkt->cabecera.num_secuencia: %d",it_tx->pkt->cabecera.numero_secuencia);
     //enviamos el paquete y nos bloqueamos
     enviar_tpdu(tsap_destino->ip,it_tx->pkt,sizeof(tpdu));

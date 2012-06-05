@@ -192,14 +192,12 @@ list<buf_pkt, shm_Allocator<buf_pkt> >::iterator buscar_buffer_libre(){
     if(KERNEL->buffers_libres.empty()) {
         fprintf(stderr,"\nla lista de libres esta vacia-> creación de un buf_pkt");
         buf_pkt nodo;
-        //nodo.pkt = (tpdu *) nodo.contenedor;
         KERNEL->buffers_libres.push_back(nodo);
     }else{
         fprintf(stderr,"\nla lista de libres no esta vacia");
     }
     it_libres = --KERNEL->buffers_libres.end();
     it_libres->pkt = (tpdu *)it_libres->contenedor;
-    //it_libres->pkt = (tpdu *)it_libres->contenedor;
     fprintf(stderr,"\nDentro de la funcion buscar_buffer_libre()");
     return it_libres;
 }
