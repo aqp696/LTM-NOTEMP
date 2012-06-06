@@ -137,11 +137,11 @@ void bucle_principal(void) {
                             //iniciamos el NUMERO DE SECUENCIA para esta conexion
                             KERNEL->CXs[puntero_pkt->cabecera.id_destino].numero_secuencia = 0;
                         }
-                        desbloquear_acceso(&KERNEL->SEMAFORO);
+                        //desbloquear_acceso(&KERNEL->SEMAFORO);
                         fprintf(stderr,"\nid_estino es: %d",puntero_pkt->cabecera.id_local);
                         fprintf(stderr,"\nid_local es: %d",puntero_pkt->cabecera.id_destino);
                         despierta_conexion(&KERNEL->CXs[puntero_pkt->cabecera.id_destino].barC);
-                        bloquear_acceso(&KERNEL->SEMAFORO);//por si acaso
+                        //bloquear_acceso(&KERNEL->SEMAFORO);//por si acaso
                         break;
                         
                     case CR:
@@ -155,6 +155,7 @@ void bucle_principal(void) {
                         //comprobar si tiene conexcion preparada en listen
                         resul = asign_conexion_CR(ip_remota,puntero_pkt);
                         it_libres = buscar_buffer_libre();
+                        
                         fprintf(stderr,"\nLe asigno al connect la conexion: %d",resul);
                         if (resul == EXNOTSAP) {
                             //paquete.cabecera.conexion_aceptada = resul;
@@ -199,12 +200,12 @@ void bucle_principal(void) {
                          fprintf(stderr,"\ndespertamos la conexion de indice: %d",resul);
                          fprintf(stderr,"%d",KERNEL->CXs[resul].puerto_origen);
                          fprintf(stderr,"%d",KERNEL->CXs[resul].puerto_destino);
-                         desbloquear_acceso(&KERNEL->SEMAFORO);
+                         //desbloquear_acceso(&KERNEL->SEMAFORO);
                          despierta_conexion(&KERNEL->CXs[resul].barC);
                          //desbloquear_acceso(&KERNEL->SEMAFORO);
                          //despierta_conexion(&KERNEL->barrera);
                          fprintf(stderr,"\nDespertamos conexion\n");
-                         bloquear_acceso(&KERNEL->SEMAFORO);
+                         //bloquear_acceso(&KERNEL->SEMAFORO);
                         break;
                     case ACK:
                         fprintf(stderr,"\nRecibido un ACK");
@@ -218,43 +219,14 @@ void bucle_principal(void) {
                                 it_libres = KERNEL->buffers_libres.begin();
                                 KERNEL->buffers_libres.splice(it_libres,KERNEL->CXs[puntero_pkt->cabecera.id_destino].TX,it_tx);
                                 it_tx++;//avanzamos el iterador al siguiente buffer de TX
-                                
-//                                //miramos si hay que mandar un DR
-//                                if((KERNEL->CXs[puntero_pkt->cabecera.id_destino].TX.empty())
-//                                        &&(KERNEL->CXs[puntero_pkt->cabecera.id_destino].signal_disconnect == true)) {
-//                                    //rellenamos datos de los TSAPs
-//                                    //t_direccion tsap_origen, tsap_destino;
-//                                    tsap_origen.ip.s_addr = KERNEL->CXs[puntero_pkt->cabecera.id_destino].ip_local.s_addr;
-//                                    tsap_origen.puerto = puntero_pkt->cabecera.puerto_dest;
-//                                    tsap_destino.ip.s_addr = ip_remota.s_addr;
-//                                    tsap_destino.puerto = puntero_pkt->cabecera.puerto_orig;
-//                                    
-//                                    //mandamos el DR a través del buffer TX
-//                                    it_libres = buscar_buffer_libre();
-//                                    it_tx = KERNEL->CXs[puntero_pkt->cabecera.id_destino].TX.end();
-//                                    KERNEL->CXs[puntero_pkt->cabecera.id_destino].TX.splice(it_tx, KERNEL->buffers_libres, it_libres);
-//                                    it_tx = --KERNEL->CXs[puntero_pkt->cabecera.id_destino].TX.end();
-//                                    crear_pkt(it_tx->pkt, DR, &tsap_destino, &tsap_origen, NULL, 0, puntero_pkt->cabecera.id_destino, puntero_pkt->cabecera.id_local);
-//                                    enviar_tpdu(tsap_destino.ip, it_tx->pkt, sizeof (tpdu));
-//                                    
-//                                    //ahora hay que avisar al send si esta dormido, que de un EXCLOSE
-//                                    if(KERNEL->CXs[puntero_pkt->cabecera.id_destino].primitiva_dormida == true){
-//                                        KERNEL->CXs[puntero_pkt->cabecera.id_destino].primitiva_dormida = false;
-//                                        desbloquear_acceso(&KERNEL->SEMAFORO);
-//                                        despierta_conexion(&KERNEL->CXs[puntero_pkt->cabecera.id_destino].barC);
-//                                    }
-//                                }
-                            
-                                //DESPUES DE MANDAR EL DR no despuerto  SEND porque habrá finalizado con EXDISC
-                                
-                                //si hay HUECO en buffer TX llamamos a la primitiva si no hay un DISCONNECT
+
                                 if((KERNEL->CXs[puntero_pkt->cabecera.id_destino].primitiva_dormida == true)
                                         &&(KERNEL->CXs[puntero_pkt->cabecera.id_destino].signal_disconnect==false)){
                                     fprintf(stderr,"\nBPRINCIPAL: recibido ACK y despertamos al send");
                                     KERNEL->CXs[puntero_pkt->cabecera.id_destino].primitiva_dormida = false;
-                                    desbloquear_acceso(&KERNEL->SEMAFORO);
+                                    //desbloquear_acceso(&KERNEL->SEMAFORO);
                                     despierta_conexion(&KERNEL->CXs[puntero_pkt->cabecera.id_destino].barC);
-                                    bloquear_acceso(&KERNEL->SEMAFORO);
+                                    //bloquear_acceso(&KERNEL->SEMAFORO);
                                 }
                             }        
                        }
@@ -264,7 +236,7 @@ void bucle_principal(void) {
                     case DATOS:
                         fprintf(stderr,"\nRecibido un DATOS");
                         //miramos si hay sitio en buffer RX
-                        if((int)KERNEL->CXs[puntero_pkt->cabecera.id_destino].RX.size() < NUM_BUF_PKTS){
+                        if(KERNEL->CXs[puntero_pkt->cabecera.id_destino].RX.size() < (uint)NUM_BUF_PKTS){
                             fprintf(stderr,"\nBPRINCIPAL: hay sitio en el buffer de RX");
                             //miramos si es el num_seq esperado
                             if(puntero_pkt->cabecera.numero_secuencia == KERNEL->CXs[puntero_pkt->cabecera.id_destino].numero_secuencia){
@@ -304,11 +276,13 @@ void bucle_principal(void) {
                                     KERNEL->CXs[puntero_pkt->cabecera.id_destino].primitiva_dormida = false;
                                     fprintf(stderr,"\nBRPINCIPAL: despertamos al receive");
                                     //KERNEL->CXs[puntero_pkt->cabecera.id_destino].primitiva_dormida = false;
-                                    desbloquear_acceso(&KERNEL->SEMAFORO);
+                                    //desbloquear_acceso(&KERNEL->SEMAFORO);
                                     despierta_conexion(&KERNEL->CXs[puntero_pkt->cabecera.id_destino].barC);
-                                    bloquear_acceso(&KERNEL->SEMAFORO);
+                                    //bloquear_acceso(&KERNEL->SEMAFORO);
                                 }
                             }
+                        }else{
+                            fprintf(stderr,"\nBPRINCIPAL: No hay sitio en el buffer de RX");
                         }
                         break;
                         
@@ -332,9 +306,9 @@ void bucle_principal(void) {
                         //miramos si hay que despertar a la primitiva
                         if(KERNEL->CXs[puntero_pkt->cabecera.id_destino].primitiva_dormida == true){
                             KERNEL->CXs[puntero_pkt->cabecera.id_destino].primitiva_dormida = false;
-                            desbloquear_acceso(&KERNEL->SEMAFORO);
+                            //desbloquear_acceso(&KERNEL->SEMAFORO);
                             despierta_conexion(&KERNEL->CXs[puntero_pkt->cabecera.id_destino].barC);
-                            bloquear_acceso(&KERNEL->SEMAFORO);
+                            //bloquear_acceso(&KERNEL->SEMAFORO);
                             
                         }
                         break;
