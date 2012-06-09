@@ -269,6 +269,7 @@ int calcular_shortest() {
         tiempo_pkt = it_tempo_pkt->timeout;
         fprintf(stderr,"\nSHORTEST: tiempo_pkt: %d",tiempo_pkt);
         tiempo_inact_pkt= tiempo_pkt - hora_actual;
+        fprintf(stderr,"\ntiempo_inact_pkt: %d",tiempo_inact_pkt);
         if(tiempo_inact_pkt <= 0){
             valor_shortest = 0;
             return valor_shortest;
