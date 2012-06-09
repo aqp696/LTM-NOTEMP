@@ -85,9 +85,10 @@ void bucle_principal(void) {
     
 
     do {
+        fprintf(stderr,"\nBPRINCIPAL: Entramos al shortest");
         shortest = calcular_shortest();
         desbloquear_acceso(&KERNEL->SEMAFORO);
-        fprintf(stderr,"\nshortest: %d",shortest);
+        fprintf(stderr,"\nBPRINCIPAL: shortest: %d",shortest);
         switch (ltm_wait4event(shortest)) {
 
             case TIME_OUT:

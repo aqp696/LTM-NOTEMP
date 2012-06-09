@@ -271,6 +271,7 @@ int calcular_shortest() {
         tiempo_inact_pkt= tiempo_pkt - hora_actual;
         fprintf(stderr,"\ntiempo_inact_pkt: %d",tiempo_inact_pkt);
         if(tiempo_inact_pkt <= 0){
+            fprintf(stderr,"\nSHORTEST: entro aki");
             valor_shortest = 0;
             return valor_shortest;
         }
