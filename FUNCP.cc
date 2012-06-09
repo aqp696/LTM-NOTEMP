@@ -247,7 +247,7 @@ int calcular_shortest() {
     uint32_t tiempo_pkt = 0, tiempo_red_aplic = 0, hora_actual;
     list<evento_t, shm_Allocator<evento_t> >::iterator it_tempo_pkt;
     list<evento_t, shm_Allocator<evento_t> >::iterator it_tempo_red_aplic;
-    uint32_t tiempo_inact_red_aplic = 0, tiempo_inact_pkt = 0;
+    int tiempo_inact_red_aplic = 0, tiempo_inact_pkt = 0;
     bool no_temp_red_aplic = false;
     bool no_temp_pkt = false;
 
