@@ -149,7 +149,7 @@ typedef struct _kernel_shm {
   uint16_t NUM_BUF_PKTS;
   uint32_t t_inicio;
   uint8_t tipo_timeout;
-  list<evento_t, shm_Allocator<evento_t> >::iterator it_tipo_vencimiento;
+  list<evento_t, shm_Allocator<evento_t> >::iterator it_temporizador_vencido;
   list<buf_pkt, shm_Allocator<buf_pkt> >buffers_libres;
   list<int, shm_Allocator<int> >CXs_libres;
 

@@ -101,7 +101,7 @@ void bucle_principal(void) {
                     //vencimiento de un temporizador de la lista red_aplic
                     case timeout_red_aplic:
                         //miramos si es de RED
-                        it_temp = KERNEL->it_tipo_vencimiento;
+                        it_temp = KERNEL->it_temporizador_vencido;
                         if(it_temp->tipo_tempo == vencimiento_red){
                             //liberamos los bufferes
                             it_libres = KERNEL->buffers_libres.begin();
@@ -122,7 +122,7 @@ void bucle_principal(void) {
                     //vencimiento de un temporizador de pkt
                     case timeout_pkt:
                         fprintf(stderr,"\nVENCIMIENTO DE PKT");
-                        it_temp = KERNEL->it_tipo_vencimiento;
+                        it_temp = KERNEL->it_temporizador_vencido;
                         //miramos si se retransmitió el máximo de retransmisiones
                         if(it_temp->it_pkt->contador_rtx == 0) {
                             //liberamos los bufferes

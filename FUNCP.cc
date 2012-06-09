@@ -223,7 +223,7 @@ uint32_t tiempo_actual(){
     gettimeofday(&tv,NULL);
 
     tiempo = tv.tv_sec*1000+tv.tv_usec/1000;
-    return tiempo;
+    return tiempo - KERNEL->t_inicio;
 }
 
 void recalcular_temporizador_red(int id) {
@@ -247,87 +247,124 @@ int calcular_shortest() {
     uint32_t tiempo_pkt = 0, tiempo_red_aplic = 0, hora_actual;
     list<evento_t, shm_Allocator<evento_t> >::iterator it_tempo_pkt;
     list<evento_t, shm_Allocator<evento_t> >::iterator it_tempo_red_aplic;
+    uint32_t tiempo_inact_red_aplic = 0, tiempo_inact_pkt = 0;
+    bool no_temp_red_aplic = false;
+    bool no_temp_pkt = false;
 
     hora_actual = tiempo_actual();
 
+    //CASO 1: las dos listas vacias
     // si las listas de temporizadores estan vacias entonces -> VALOR POR DEFECTO = 5seg
     if ((KERNEL->tout_pkts.empty()) && (KERNEL->tout_red_aplic.empty())) {
         //KERNEL->tipo_timeout = timeout_normal;
-        return valor_shortest;
+        return -1;
     }
 
-    //si hay temporizador de red_aplic miramos su valor de timeout
-    if (!KERNEL->tout_red_aplic.empty()) {
-        it_tempo_red_aplic = KERNEL->tout_red_aplic.begin();
-        tiempo_red_aplic = it_tempo_red_aplic->timeout;
-    }
-
-    //si hay temporizador de pkt miramos su valor de timeout
     if (!KERNEL->tout_pkts.empty()) {
         it_tempo_pkt = KERNEL->tout_pkts.begin();
         tiempo_pkt = it_tempo_pkt->timeout;
-    }
-
-    //comparamos los valores de los temporizadores para saber cual vencio antes
-    if (tiempo_pkt < tiempo_red_aplic) {
-        if (tiempo_pkt - hora_actual >= 0) {
-            valor_shortest = tiempo_pkt - hora_actual;
-            //KERNEL->it_tipo_vencimiento = it_tempo_pkt;
-            //KERNEL->tipo_timeout = timeout_pkt;
-        }else{
+        tiempo_inact_pkt= tiempo_pkt - hora_actual;
+        if(tiempo_inact_pkt <= 0){
             valor_shortest = 0;
-            //KERNEL->tipo_timeout = timeout_normal;
+            return valor_shortest;
         }
-    } else {
-        if (tiempo_red_aplic - hora_actual >= 0) {
-            valor_shortest = tiempo_red_aplic - hora_actual;
-            //KERNEL->it_tipo_vencimiento = it_tempo_red_aplic;
-            //KERNEL->tipo_timeout = timeout_red_aplic;
-        }else{
+    }else{
+        no_temp_pkt = true;
+    }
+    
+    if(!KERNEL->tout_red_aplic.empty()){
+        it_tempo_red_aplic = KERNEL->tout_red_aplic.begin();
+        tiempo_red_aplic = it_tempo_red_aplic->timeout;
+        tiempo_inact_red_aplic = tiempo_red_aplic - hora_actual;
+        if(tiempo_inact_red_aplic <= 0){
             valor_shortest = 0;
-            //KERNEL->tipo_timeout = timeout_normal;
+            return valor_shortest;
+        }
+    }else{
+        no_temp_red_aplic = true;
+    }
+    //no hay temporizador de red, pero sí hay temporizador de pakete
+    if(no_temp_red_aplic){
+        valor_shortest = tiempo_inact_pkt;
+        return valor_shortest;
+    }
+    
+    //no hay temporizador de pkt, pero sí hay temporizador de red
+    if (no_temp_pkt) {
+        if (tiempo_inact_red_aplic < 5000) {
+            valor_shortest = tiempo_inact_red_aplic;
+        }else{//si el tiempo de inactividad es mayor de 5 segundos, ponemos el valor por defecto
+            valor_shortest = -1;
+        }
+    } else {// hay los 2 temporizadores miramos cual es el menor
+        if (tiempo_inact_red_aplic < tiempo_inact_pkt) {
+            valor_shortest = tiempo_inact_red_aplic;
+        } else {
+            valor_shortest = tiempo_inact_pkt;
         }
     }
-
+    
     return valor_shortest;
 }
 
 void comprobar_vencimientos(){
     uint32_t hora_actual = tiempo_actual();
     uint32_t tiempo_pkt = 0, tiempo_red_aplic = 0;
+    int tiempo_inact_pkt = 0, tiempo_inact_red_aplic = 0;
     list<evento_t, shm_Allocator<evento_t> >::iterator it_tempo_pkt;
     list<evento_t, shm_Allocator<evento_t> >::iterator it_tempo_red_aplic;
 
     //miramos si fue un timeout normal
     if((KERNEL->tout_pkts.empty())&&(KERNEL->tout_red_aplic.empty())){
         KERNEL->tipo_timeout = timeout_normal;
-    }
-
-    //miramos el timeout del temporizador_pkt
-    if(!KERNEL->tout_pkts.empty()){
-        it_tempo_pkt = KERNEL->tout_pkts.begin();
-        tiempo_pkt = it_tempo_pkt->timeout;
-    }
-
-    //miramos el timeout del temporizador red_aplic
-    if(!KERNEL->tout_red_aplic.empty()){
-        it_tempo_red_aplic = KERNEL->tout_red_aplic.begin();
-        tiempo_red_aplic = it_tempo_red_aplic->timeout;
-    }
-
-    //miramos qué temporizador venció antes
-    if(tiempo_pkt <= tiempo_red_aplic){
-        if(tiempo_pkt - hora_actual <= 0){
-            KERNEL->it_tipo_vencimiento = it_tempo_pkt;
-            KERNEL->tipo_timeout = timeout_pkt;
-        }else{
-            KERNEL->tipo_timeout = timeout_normal;
+    }else{
+        //se cumple que hay temporizadores en las 2 listas
+        if((!KERNEL->tout_pkts.empty())&&(!KERNEL->tout_red_aplic.empty())){
+            it_tempo_pkt = KERNEL->tout_pkts.begin();
+            it_tempo_red_aplic = KERNEL->tout_red_aplic.begin();
+            tiempo_pkt = it_tempo_pkt->timeout;
+            tiempo_red_aplic = it_tempo_red_aplic->timeout;
+            tiempo_inact_pkt = tiempo_pkt - hora_actual;
+            tiempo_inact_red_aplic = tiempo_red_aplic - hora_actual;
+            //miramos que temporizador vence antes
+            if(tiempo_inact_red_aplic < tiempo_inact_pkt){
+                if(tiempo_inact_red_aplic <= 0){
+                    KERNEL->tipo_timeout = timeout_red_aplic;
+                    KERNEL->it_temporizador_vencido = it_tempo_red_aplic;
+                }else{
+                    KERNEL->tipo_timeout = timeout_normal;
+                }
+            }else{
+                if(tiempo_inact_pkt <= 0){
+                    KERNEL->tipo_timeout = timeout_pkt;
+                    KERNEL->it_temporizador_vencido = it_tempo_pkt;
+                }else{
+                    KERNEL->tipo_timeout = timeout_normal;
+                }
+            }
+        }else{//al menos hay un temporizador
+            //el temporizador es de pkt
+            if(!KERNEL->tout_pkts.empty()){
+                it_tempo_pkt = KERNEL->tout_pkts.begin();
+                tiempo_pkt = it_tempo_pkt->timeout;
+                tiempo_inact_pkt = tiempo_pkt - hora_actual;
+                if(tiempo_inact_pkt <= 0){
+                    KERNEL->tipo_timeout = timeout_pkt;
+                    KERNEL->it_temporizador_vencido = it_tempo_pkt;
+                }else{
+                    KERNEL->tipo_timeout = timeout_normal;
+                }
+            }else{//el temporizador es de red/aplic
+                it_tempo_red_aplic = KERNEL->tout_red_aplic.begin();
+                tiempo_red_aplic = it_tempo_red_aplic->timeout;
+                tiempo_inact_red_aplic = tiempo_red_aplic - hora_actual;
+                if(tiempo_inact_red_aplic <= 0){
+                    KERNEL->tipo_timeout = timeout_red_aplic;
+                    KERNEL->it_temporizador_vencido = it_tempo_red_aplic;
+                }else{
+                    KERNEL->tipo_timeout = timeout_normal;
+                }
+            }
         }
-    }else{//tiempo_red_aplic < tiempo_pkt
-        if(tiempo_red_aplic - hora_actual <= 0){
-            KERNEL->it_tipo_vencimiento = it_tempo_red_aplic;
-            KERNEL->tipo_timeout = timeout_red_aplic;
-        }
     }
-
 }
