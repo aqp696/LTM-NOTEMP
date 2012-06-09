@@ -292,19 +292,22 @@ void bucle_principal(void) {
                         fprintf(stderr,"\nRecibido un ACK");
                         indice = KERNEL->CXs[puntero_pkt->cabecera.id_destino].TX.size();// lo hago porque size() varia en el bucle
                         it_tx = KERNEL->CXs[puntero_pkt->cabecera.id_destino].TX.begin();//apunta al principio de TX
+                        fprintf(stderr,"\nit_tx->it_tout_pkt->timeout: %d",it_tx->it_tout_pkt->timeout);
                         fprintf(stderr,"\nBPRINCIPAL: procedemos a liberar paketes asentidos");
                         //LIBERAMOS TODOS LOS PAKETES ASENTIDOS
                         for(i=0;(uint)i < (uint)indice;i++){
                             //miramos a que buffer de TX asiente y pasamos a buffer libres
                             if(puntero_pkt->cabecera.numero_secuencia >= it_tx->num_secuencia){
                                 //kitamos el temporizador de pkt correspondiente y lo pasamos a libres
-                                it_nuevo_tempo = KERNEL->temporizadores_libres.begin();
+                                /*it_nuevo_tempo = KERNEL->temporizadores_libres.begin();
                                 it_temp = it_tx->it_tout_pkt;
-                                KERNEL->temporizadores_libres.splice(it_nuevo_tempo,KERNEL->tout_pkts,it_temp);
-
+                                KERNEL->temporizadores_libres.splice(it_nuevo_tempo,KERNEL->tout_pkts,it_temp);*/
+                                
                                 it_tx->estado_pkt = confirmado;
-                                it_libres = KERNEL->buffers_libres.begin();
+                                KERNEL->temporizadores_libres.splice(KERNEL->temporizadores_libres.begin(),KERNEL->tout_pkts,it_tx->it_tout_pkt);
+                                it_libres = KERNEL->buffers_libres.end();
                                 KERNEL->buffers_libres.splice(it_libres,KERNEL->CXs[puntero_pkt->cabecera.id_destino].TX,it_tx);
+                                
                                 it_tx++;//avanzamos el iterador al siguiente buffer de TX
 
                                 if((KERNEL->CXs[puntero_pkt->cabecera.id_destino].primitiva_dormida == true)
