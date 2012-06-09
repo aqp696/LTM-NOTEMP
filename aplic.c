@@ -87,20 +87,15 @@ static int do_receiver_part(t_direccion *dir_local, t_direccion *dir_remota, cha
     }
 
     mostra_tsaps(dir_local, dir_remota);
-    
-    fprintf(stderr,"\nAntes de abrir fichero");
 
     if((fwri = fopen(fich,"w"))<0){
         fprintf(stderr, "Non se puido abrir o ficheiro: %s\n", fich);
         exit(1);
     }
-    
-    fprintf(stderr,"\nENTRO AKI1!!!");
 
     do {
 
         len1 = t_receive(cx1, buf, bs, &flags);
-        fprintf(stderr,"\nterminado un receive, len1: %d",len1);
 
         if (len1 > 0 ) {
             bytesrecibidos += len1;
