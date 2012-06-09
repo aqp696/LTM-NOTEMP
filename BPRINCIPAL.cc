@@ -93,6 +93,7 @@ void bucle_principal(void) {
 
             case TIME_OUT:
                 bloquear_acceso(&KERNEL->SEMAFORO);
+                /*
                 comprobar_vencimientos();
 
                 //miramos qué ha vencido
@@ -153,7 +154,8 @@ void bucle_principal(void) {
                             
                         }
                         break;
-                }
+                }*/
+                fprintf(stderr,"\nEl protocolo despierta por TIMEOUT (hora: %ld)",time(0));
                 break;
 
             case INTERRUP:
