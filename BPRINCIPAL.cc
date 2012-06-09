@@ -144,7 +144,7 @@ void bucle_principal(void) {
                             }
                         }else{// si no, retransmitimos el PKT
                             fprintf(stderr,"\nRetransmitimos PKT");
-                            enviar_tpdu(KERNEL->CXs[it_temp->indice_cx].ip_destino, it_tx->pkt, sizeof (tpdu));
+                            enviar_tpdu(KERNEL->CXs[it_temp->indice_cx].ip_destino, it_temp->it_pkt->pkt, sizeof (tpdu));
                             it_temp->it_pkt->contador_rtx--;
                             //recalculamos el nuevo tiempo de vencimiento
                             it_temp->timeout = tiempo_rtx_pkt;
