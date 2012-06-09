@@ -469,9 +469,9 @@ size_t t_send(int id, const void *datos, size_t longitud, int8_t *flags) {
             fprintf(stderr,"\nSEND: enviado TDPU");
 
             //actualizamos el shortest provocando un interrumpe_daemon
-            /*if(KERNEL->tout_pkts.size() == 1){
+            if(KERNEL->tout_pkts.size() == 1){
                 interrumpe_daemon();
-            }*/
+            }
                
             it_tx->estado_pkt = no_confirmado;
             it_tx->contador_rtx = NUM_MAX_RTx;
