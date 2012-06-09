@@ -243,7 +243,7 @@ void recalcular_temporizador_aplic(int id){
 }
 
 int calcular_shortest() {
-    int valor_shortest = 5000;
+    int valor_shortest = -1;
     uint32_t tiempo_pkt = 0, tiempo_red_aplic = 0, hora_actual;
     list<evento_t, shm_Allocator<evento_t> >::iterator it_tempo_pkt;
     list<evento_t, shm_Allocator<evento_t> >::iterator it_tempo_red_aplic;
@@ -252,35 +252,43 @@ int calcular_shortest() {
     bool no_temp_pkt = false;
 
     hora_actual = tiempo_actual();
+    fprintf(stderr,"SHORTEST: hora_actual: %d",hora_actual);
 
     //CASO 1: las dos listas vacias
     // si las listas de temporizadores estan vacias entonces -> VALOR POR DEFECTO = 5seg
+    fprintf(stderr,"\nSHORTEST: las dos listas estan vacias, valor -1");
     if ((KERNEL->tout_pkts.empty()) && (KERNEL->tout_red_aplic.empty())) {
         //KERNEL->tipo_timeout = timeout_normal;
         return -1;
     }
 
     if (!KERNEL->tout_pkts.empty()) {
+        fprintf(stderr,"\nSHORTEST: la lista de pkts no esta vacia");
         it_tempo_pkt = KERNEL->tout_pkts.begin();
         tiempo_pkt = it_tempo_pkt->timeout;
+        fprintf(stderr,"\nSHORTEST: tiempo_pkt: %d",tiempo_pkt);
         tiempo_inact_pkt= tiempo_pkt - hora_actual;
         if(tiempo_inact_pkt <= 0){
             valor_shortest = 0;
             return valor_shortest;
         }
     }else{
+        fprintf(stderr,"\nSHORTEST: la lista de pkts esta vacia");
         no_temp_pkt = true;
     }
     
     if(!KERNEL->tout_red_aplic.empty()){
+        fprintf(stderr,"\nSHORTEST: la lista de red/aplic no esta vacia");
         it_tempo_red_aplic = KERNEL->tout_red_aplic.begin();
         tiempo_red_aplic = it_tempo_red_aplic->timeout;
+        fprintf(stderr,"\nSHORTEST: tiempo_red_aplic: %d",tiempo_red_aplic);
         tiempo_inact_red_aplic = tiempo_red_aplic - hora_actual;
         if(tiempo_inact_red_aplic <= 0){
             valor_shortest = 0;
             return valor_shortest;
         }
     }else{
+        fprintf(stderr,"\nSHORTEST: la lista de red/aplic esta vacia");
         no_temp_red_aplic = true;
     }
     //no hay temporizador de red, pero sí hay temporizador de pakete

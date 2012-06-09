@@ -71,6 +71,7 @@ void bucle_principal(void) {
     struct timeval tv;
     gettimeofday(&tv,NULL);
     KERNEL->t_inicio = tv.tv_sec*1000+tv.tv_usec/1000;
+    fprintf(stderr,"\nKERNEL->t_inicio: %d",KERNEL->t_inicio);
 
     list<evento_t, shm_Allocator<evento_t> >::iterator it_nuevo_tempo;
     list<evento_t, shm_Allocator<evento_t> >::iterator it_temp;
@@ -86,6 +87,7 @@ void bucle_principal(void) {
     do {
         shortest = calcular_shortest();
         desbloquear_acceso(&KERNEL->SEMAFORO);
+        fprintf(stderr,"\nshortest: %d",shortest);
         switch (ltm_wait4event(shortest)) {
 
             case TIME_OUT:
