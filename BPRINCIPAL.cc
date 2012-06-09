@@ -142,6 +142,7 @@ void bucle_principal(void) {
                                 despierta_conexion(&KERNEL->CXs[it_temp->indice_cx].barC);
                             }
                         }else{// si no, retransmitimos el PKT
+                            fprintf("\nRetransmitimos PKT");
                             enviar_tpdu(KERNEL->CXs[it_temp->indice_cx].ip_destino, it_tx->pkt, sizeof (tpdu));
                             it_temp->it_pkt->contador_rtx--;
                             //recalculamos el nuevo tiempo de vencimiento
