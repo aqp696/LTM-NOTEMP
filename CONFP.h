@@ -30,8 +30,8 @@ using namespace std;
 
 //CALCULO DE VENCIMIENTO TEMPORIZADORES
 #define tiempo_rtx_pkt tiempo_actual()-KERNEL->t_inicio+200
-#define tiempo_rtx_red tiempo_actual() -KERNEL->t_inicio+1000
-#define tiempo_rtx_aplic tiempo_actual() -KERNEL->t_inicio+1000
+#define tiempo_rtx_red tiempo_actual() -KERNEL->t_inicio+60000
+#define tiempo_rtx_aplic tiempo_actual() -KERNEL->t_inicio+60000
 #define NUM_MAX_RTx 6
 
 //ESTADOS DE ENVIO DE PKT
@@ -42,6 +42,11 @@ using namespace std;
 #define vencimiento_pkt 300
 #define vencimiento_red 301
 #define vencimiento_aplic 302
+
+//TIPOS DE TIMEOUT
+#define timeout_normal 1
+#define timeout_pkt 2
+#define timeout_red_aplic 3
 
 // INICIACION DE UNA LISTA EN LA ZONA DE MEMORIA COMPARTIDA 
 
@@ -124,6 +129,9 @@ typedef struct _conexion {
   // lista de paquetes/buf. pendientes de asentimiento
   // lista de paquetes/buf. recibidos
   // ...
+
+  list<evento_t, shm_Allocator<evento_t> >::iterator it_tempo_red;//iterador al temporizador de red
+  list<evento_t, shm_Allocator<evento_t> >::iterator it_tempo_aplic;//iterador al temporizador de aplicacion
   
   list<buf_pkt, shm_Allocator<buf_pkt> >TX; //bufferes de transmision
   list<buf_pkt, shm_Allocator<buf_pkt> >RX; //bufferes de recepcion
@@ -140,9 +148,15 @@ typedef struct _kernel_shm {
   semaforo_t SEMAFORO;
   uint16_t NUM_BUF_PKTS;
   uint32_t t_inicio;
+  uint8_t tipo_timeout;
   list<evento_t, shm_Allocator<evento_t> >::iterator it_tipo_vencimiento;
   list<buf_pkt, shm_Allocator<buf_pkt> >buffers_libres;
   list<int, shm_Allocator<int> >CXs_libres;
+
+  list<evento_t, shm_Allocator<evento_t> >tout_pkts;
+  list<evento_t, shm_Allocator<evento_t> >tout_red_aplic;
+  list<evento_t, shm_Allocator<evento_t> >temporizadores_libres;
+
   // semaforo
   // lista temporizadores
   // lista de buf. libres
@@ -165,6 +179,13 @@ int asign_conexion_CR(struct in_addr ip_remota, tpdu* puntero_pkt);
 void inicializar_CXs_libres();
 int buscar_connect_repetido(t_direccion *tsap_origen,const t_direccion *tsap_destino);
 int buscar_listen_repetido(t_direccion *tsap_escucha, t_direccion *tsap_remota);
-list<buf_pkt>::iterator buscar_buffer_libre();
+list<buf_pkt, shm_Allocator<buf_pkt> >::iterator buscar_buffer_libre();
+list<evento_t, shm_Allocator<evento_t> >::iterator buscar_temporizador_libre();
+uint32_t tiempo_actual();
+void recalcular_temporizador_red(int id);
+void recalcular_temporizador_aplic(int id);
+int calcular_shortest();
+void comprobar_vencimientos();
+
 
 #endif /* _CONFP_H */

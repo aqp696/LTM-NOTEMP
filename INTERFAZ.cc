@@ -15,6 +15,8 @@ int t_connect(const t_direccion *tsap_destino, t_direccion *tsap_origen) {
     t_direccion tsap_destino_aux;
     list<buf_pkt, shm_Allocator<buf_pkt> >::iterator it_buffer;
     list<buf_pkt, shm_Allocator<buf_pkt> >::iterator it_tx;
+    list<evento_t, shm_Allocator<evento_t> >::iterator it_nuevo_tempo;
+    list<evento_t, shm_Allocator<evento_t> >::iterator it_temp;
 #ifdef DEPURA
     fprintf(stderr,"\nObtenemos el Kernel");
 #endif
@@ -100,6 +102,19 @@ int t_connect(const t_direccion *tsap_destino, t_direccion *tsap_origen) {
     fprintf(stderr,"\nvolvemos al it_tx-> it_tx->pkt->cabecera.num_secuencia: %d",it_tx->pkt->cabecera.numero_secuencia);
     //enviamos el paquete y nos bloqueamos
     enviar_tpdu(tsap_destino->ip,it_tx->pkt,sizeof(tpdu));
+
+    //creamos el temporizador para el CR
+    it_nuevo_tempo = buscar_temporizador_libre();
+    it_nuevo_tempo->indice_cx = indice_celda;
+    it_nuevo_tempo->timeout = tiempo_rtx_pkt;
+    it_nuevo_tempo->tipo_tempo = vencimiento_pkt;
+    //hacemos que apunte el temporizador->buffer y buffer->temporizador
+    it_nuevo_tempo->it_pkt = it_tx;
+    it_tx->it_tout_pkt = it_nuevo_tempo;
+    //pasamos el temporizador a la lista de tempo_pkts
+    it_temp = KERNEL->tout_pkts.end();
+    KERNEL->tout_pkts.splice(it_temp,KERNEL->temporizadores_libres,it_nuevo_tempo);
+
     fprintf(stderr,"\nla id_local es: %d",indice_celda);
     desbloquear_acceso(&KERNEL->SEMAFORO);
     bloquea_llamada(&KERNEL->CXs[indice_celda].barC);
@@ -115,7 +130,29 @@ int t_connect(const t_direccion *tsap_destino, t_direccion *tsap_origen) {
         ltm_exit_kernel((void**) & KERNEL);
         return res;
     }
+
+    //iniciamos el temporizador de red y el de aplicacion
     
+    //temporizador de red
+    it_nuevo_tempo = buscar_temporizador_libre();
+    it_nuevo_tempo->indice_cx = indice_celda;
+    it_nuevo_tempo->timeout = tiempo_rtx_red;
+    it_nuevo_tempo->tipo_tempo = vencimiento_red;
+    //enlazamos la conexion a su temporizador de red
+    KERNEL->CXs[indice_celda].it_tempo_red = it_nuevo_tempo;
+    it_temp = KERNEL->tout_red_aplic.end();
+    KERNEL->tout_red_aplic.splice(it_temp,KERNEL->temporizadores_libres,it_nuevo_tempo);
+
+    //temporizador de aplicacion
+    it_nuevo_tempo = buscar_temporizador_libre();
+    it_nuevo_tempo->indice_cx = indice_celda;
+    it_nuevo_tempo->timeout = tiempo_rtx_aplic;
+    it_nuevo_tempo->tipo_tempo = vencimiento_aplic;
+    //enlazamos la conexion a su temporizador de aplicacion
+    KERNEL->CXs[indice_celda].it_tempo_aplic = it_nuevo_tempo;
+    it_temp = KERNEL->tout_red_aplic.end();
+    KERNEL->tout_red_aplic.splice(it_temp,KERNEL->temporizadores_libres,it_nuevo_tempo);
+
     desbloquear_acceso(&KERNEL->SEMAFORO);
 
     fprintf(stderr,"\nDevolvemos el kernel");
@@ -212,6 +249,30 @@ int t_listen(t_direccion *tsap_escucha, t_direccion *tsap_remota) {
         return res;
     }
 
+    //iniciamos el temporizador de red y el de aplicacion
+    list<evento_t, shm_Allocator<evento_t> >::iterator it_temp;
+    //temporizador de red
+    list<evento_t, shm_Allocator<evento_t> >::iterator it_nuevo_tempo = buscar_temporizador_libre();
+    it_nuevo_tempo->indice_cx = indice_celda;
+    it_nuevo_tempo->timeout = tiempo_rtx_red;
+    it_nuevo_tempo->tipo_tempo = vencimiento_red;
+    it_temp = KERNEL->tout_red_aplic.end();
+    KERNEL->tout_red_aplic.splice(it_temp,KERNEL->temporizadores_libres,it_nuevo_tempo);
+    //apuntamos el temporizador de red en la conexion
+    KERNEL->CXs[indice_celda].it_tempo_red = --KERNEL->tout_red_aplic.end();
+    
+    //temporizador de aplicacion
+    it_nuevo_tempo = buscar_temporizador_libre();
+    it_nuevo_tempo->indice_cx = indice_celda;
+    it_nuevo_tempo->timeout = tiempo_rtx_aplic;
+    it_nuevo_tempo->tipo_tempo = vencimiento_aplic;
+    it_temp = KERNEL->tout_red_aplic.end();
+    KERNEL->tout_red_aplic.splice(it_temp,KERNEL->temporizadores_libres,it_nuevo_tempo);
+    //apuntamos el temporizador de aplicacion en la conexion
+    KERNEL->CXs[indice_celda].it_tempo_aplic = --KERNEL->tout_red_aplic.end();
+
+    
+
     desbloquear_acceso(&KERNEL->SEMAFORO);
     fprintf(stderr,"\nDevolvemos el kernel y retornamos a la aplicacion");
     ltm_exit_kernel((void**) & KERNEL);
@@ -222,6 +283,9 @@ int t_listen(t_direccion *tsap_escucha, t_direccion *tsap_remota) {
 int t_disconnect(int id) {
     list<buf_pkt, shm_Allocator<buf_pkt> >::iterator it_libre;
     list<buf_pkt, shm_Allocator<buf_pkt> >::iterator it_tx;
+
+    list<evento_t, shm_Allocator<evento_t> >::iterator it_nuevo_tempo;
+    list<evento_t, shm_Allocator<evento_t> >::iterator it_temp;
     
     //obtenemos el KERNEL
     int er = ltm_get_kernel(dir_proto, (void**) & KERNEL);
@@ -247,33 +311,22 @@ int t_disconnect(int id) {
     it_tx = KERNEL->CXs[id].TX.end();
     KERNEL->CXs[id].TX.splice(it_tx,KERNEL->buffers_libres,it_libre);
     it_tx = --KERNEL->CXs[id].TX.end();
+    it_tx->contador_rtx = NUM_MAX_RTx;
     crear_pkt(it_tx->pkt, DR, &tsap_destino, &tsap_origen, NULL, 0, id, KERNEL->CXs[id].id_destino);
     enviar_tpdu(tsap_destino.ip, it_tx->pkt, sizeof(tpdu));
-    
-    
-    /*
-    //creamos paquete DR y enviamos
-    if (KERNEL->CXs[id].TX.empty()) {//miramos si no hay paquetes pendientes de ACK
-        it_libre = buscar_buffer_libre();
-        it_tx = KERNEL->CXs[id].TX.end();
-        KERNEL->CXs[id].TX.splice(it_tx, KERNEL->buffers_libres, it_libre);
-        it_tx = --KERNEL->CXs[id].TX.end();
-        crear_pkt(it_tx->pkt, DR, &tsap_destino, &tsap_origen, NULL, 0, id, KERNEL->CXs[id].id_destino);
-        enviar_tpdu(tsap_destino.ip, it_tx->pkt, sizeof (tpdu));
-        
-        //modificamos el estado de la conexion
-        //KERNEL->CXs[id].estado_cx = FIN_WAIT1; QUE HACER, usar??????????
 
-        //desbloqueamos KERNEL y nos bloqueamos
-        KERNEL->CXs[id].primitiva_dormida = true;
-        desbloquear_acceso(&KERNEL->SEMAFORO);
-        bloquea_llamada(&KERNEL->CXs[id].barC);
-        bloquear_acceso(&KERNEL->SEMAFORO);
-        KERNEL->CXs[id].primitiva_dormida = false;
-    }else{//si no, avisamos al KERNEL de que estamos cerrando
-        KERNEL->CXs[id].signal_disconnect = true;
-    }
-     */
+    //creamos el temporizador para el PKT_DR
+    it_nuevo_tempo = buscar_temporizador_libre();
+    it_nuevo_tempo->indice_cx = id;
+    it_nuevo_tempo->timeout = tiempo_rtx_pkt;
+    it_nuevo_tempo->tipo_tempo = vencimiento_pkt;
+    //hacemos que apunte el temporizador->buffer y buffer->temporizador
+    it_nuevo_tempo->it_pkt = it_tx;
+    it_tx->it_tout_pkt = it_nuevo_tempo;
+    //pasamos el temporizador a la lista de tempo_pkts
+    it_temp = KERNEL->tout_pkts.end();
+    KERNEL->tout_pkts.splice(it_temp, KERNEL->temporizadores_libres, it_nuevo_tempo);
+    
     
     // ..... aqui vuestro codigo
     desbloquear_acceso(&KERNEL->SEMAFORO);
@@ -283,6 +336,8 @@ int t_disconnect(int id) {
 
 size_t t_send(int id, const void *datos, size_t longitud, int8_t *flags) {
     int tamanho = MAX_DATOS; //inicializamos tamanho al máximo
+    list<evento_t, shm_Allocator<evento_t> >::iterator it_nuevo_tempo;
+    list<evento_t, shm_Allocator<evento_t> >::iterator it_temp;
     //int res = EXOK;
     fprintf(stderr,"\nsend de longitud: %d",longitud);
     //obtenemos el kernel
@@ -292,7 +347,7 @@ size_t t_send(int id, const void *datos, size_t longitud, int8_t *flags) {
     
     bloquear_acceso(&KERNEL->SEMAFORO);
     
-    void *puntero_datos = (void *)datos;
+    char *puntero_datos = (char *)datos;
 
     //miramos si hay datos disponibles
     if(datos == NULL){
@@ -336,6 +391,9 @@ size_t t_send(int id, const void *datos, size_t longitud, int8_t *flags) {
     //definimos iteradores
     list<buf_pkt, shm_Allocator<buf_pkt> >:: iterator it_libres;
     list<buf_pkt, shm_Allocator<buf_pkt> >::iterator it_tx;
+
+    //actualizamos el temporizador de la aplicacion
+    recalcular_temporizador_aplic(id);
     
     //mientras queden datos por transmitir ... ENVIAMOS
     while(numero_sends > 0){
@@ -370,6 +428,7 @@ size_t t_send(int id, const void *datos, size_t longitud, int8_t *flags) {
             fprintf(stderr,"\nSEND: pasamos el buffer a la lista de TX");
             it_tx = --KERNEL->CXs[id].TX.end();
             it_tx->pkt = (tpdu *)(it_tx->contenedor);
+            it_tx->contador_rtx = NUM_MAX_RTx;
             //creamos el pakete y lo enviamos, crear_pkt pone cabecera.close=0 por defecto
             crear_pkt(it_tx->pkt,DATOS,&tsap_destino,&tsap_origen,puntero_datos,tamanho,id,KERNEL->CXs[id].id_destino);
             fprintf(stderr,"\nSEND: creado el pakete de DATOS");
@@ -382,8 +441,37 @@ size_t t_send(int id, const void *datos, size_t longitud, int8_t *flags) {
                 //avisamos a la aplicacion del envio de todos los datos
                 //*flags=*flags & (0xFF^CLOSE);
             }
+            
+            fprintf(stderr, "\nit_tx->pkt->cabecera.close: %d", it_tx->pkt->cabecera.close);
+            fprintf(stderr, "\nit_tx->pkt->cabecera.tipo: %d", it_tx->pkt->cabecera.tipo);
+            fprintf(stderr, "\nit_tx->pkt->cabecera.id_local: %d", it_tx->pkt->cabecera.id_local);
+            fprintf(stderr, "\nit_tx->pkt->cabecera.id_destino: %d", it_tx->pkt->cabecera.id_destino);
+            fprintf(stderr, "\nit_tx->pkt->cabecera.puerto_orig: %d", it_tx->pkt->cabecera.puerto_orig);
+            fprintf(stderr, "\nit_tx->pkt->cabecera.puerto_dest: %d", it_tx->pkt->cabecera.puerto_dest);
+            fprintf(stderr, "\nit_tx->pkt->cabecera.numero_secuencia: %d", it_tx->pkt->cabecera.numero_secuencia);
+
+
             enviar_tpdu(tsap_destino.ip,it_tx->pkt,sizeof(tpdu));
+
+            //creamos el temporizador para el PKT_DATOS
+            it_nuevo_tempo = buscar_temporizador_libre();
+            it_nuevo_tempo->indice_cx = id;
+            it_nuevo_tempo->timeout = tiempo_rtx_pkt;
+            it_nuevo_tempo->tipo_tempo = vencimiento_pkt;
+            //hacemos que apunte el temporizador->buffer y buffer->temporizador
+            it_nuevo_tempo->it_pkt = it_tx;
+            it_tx->it_tout_pkt = it_nuevo_tempo;
+            //pasamos el temporizador a la lista de tempo_pkts
+            it_temp = KERNEL->tout_pkts.end();
+            KERNEL->tout_pkts.splice(it_temp, KERNEL->temporizadores_libres, it_nuevo_tempo);
+
             fprintf(stderr,"\nSEND: enviado TDPU");
+
+            //actualizamos el shortest provocando un interrumpe_daemon
+            if(KERNEL->tout_pkts.size() == 1){
+                interrumpe_daemon();
+            }
+
             it_tx->estado_pkt = no_confirmado;
             it_tx->contador_rtx = NUM_MAX_RTx;
             it_tx->num_secuencia = KERNEL->CXs[id].numero_secuencia;
@@ -467,7 +555,12 @@ size_t t_receive(int id, void *datos, size_t longitud, int8_t *flags) {
     
     unsigned int indice;
     unsigned int num_buf_rx;
-    
+
+    int flag_fin_primitiva = 0;
+
+    //recalculamos el temporizador de aplicacion
+    recalcular_temporizador_aplic(id);
+
     fprintf(stderr,"\nRECEIVE: Empezamos a recibir");
     //nos disponemos a recibir
     while(datos_por_recibir > 0){
@@ -484,14 +577,28 @@ size_t t_receive(int id, void *datos, size_t longitud, int8_t *flags) {
                 }
                 
                 it_rx = KERNEL->CXs[id].RX.begin();
+                it_rx->pkt = (tpdu *)(it_rx->contenedor+20);
                 fprintf(stderr,"\nit_rx->pkt->cabecera.close: %d",it_rx->pkt->cabecera.close);
-                
+                fprintf(stderr,"\nit_rx->pkt->cabecera.tipo: %d",it_rx->pkt->cabecera.tipo);
+                fprintf(stderr,"\nit_rx->pkt->cabecera.id_local: %d",it_rx->pkt->cabecera.id_local);
+                fprintf(stderr,"\nit_rx->pkt->cabecera.id_destino: %d",it_rx->pkt->cabecera.id_destino);
+                fprintf(stderr,"\nit_rx->pkt->cabecera.puerto_orig: %d",it_rx->pkt->cabecera.puerto_orig);
+                fprintf(stderr,"\nit_rx->pkt->cabecera.puerto_dest: %d",it_rx->pkt->cabecera.puerto_dest);
+                fprintf(stderr, "\nit_rx->pkt->cabecera.numero_secuencia: %d", it_rx->pkt->cabecera.numero_secuencia);
+
+
                 fprintf(stderr,"\nRECEIVE: Miramos si cabecera.close=1");
                 //miramos si es el ultimo pakete con CLOSE para avisar a la aplicacion
                 if (it_rx->pkt->cabecera.close == 1) {
                     fprintf(stderr,"\nRECEIVE: casca al comprobar la cabecera.close=1");
                     *flags = (*flags || CLOSE);
+                    flag_fin_primitiva = 1;
+                    
+                }else{
+                    fprintf(stderr,"\nRECEIVE: la cabecera->close != 1");
                 }
+
+                fprintf(stderr,"\nRECEIVE: datos_aux: %s",&(*datos_aux));
                 //VERSION NUEVA!!!
                 if(it_rx->bytes_restan > longitud){//leemos lo que podamos del buffer de rx
                     memcpy(datos_aux,it_rx->ultimo_byte, longitud);
@@ -509,42 +616,15 @@ size_t t_receive(int id, void *datos, size_t longitud, int8_t *flags) {
                     fprintf(stderr,"\nRECEIVE: datos_recibidos: %d",datos_recibidos);
                     datos_por_recibir -= it_rx->bytes_restan;
                     datos_recibidos += it_rx->bytes_restan;
+                    datos_aux+=it_rx->bytes_restan;
                     it_rx->ultimo_byte+=it_rx->bytes_restan;
-                    it_rx->bytes_restan -= it_rx->bytes_restan;
-                    
+                    it_rx->bytes_restan -= it_rx->bytes_restan;                   
                     
                     //pasamos el buffer de rx a libres
                     it_libres = KERNEL->buffers_libres.end();
                     KERNEL->buffers_libres.splice(it_libres,KERNEL->CXs[id].RX,it_rx);
                     break;
                 }
-                //MANTENER POR SI ACASO->miramos si restan=0, en la otra version nunca restan=0!!!!!!!!!!!!!!!!!
-//                it_libres = KERNEL->buffers_libres.begin();
-//                //si de este buffer no quedan bytes lo pasamos a libres
-//                if(it_rx->bytes_restan == 0){
-//                    fprintf(stderr,"\nRECEIVE: el buffer ya no tiene mas datos, lo pasamos a LIBRES");
-//                    KERNEL->buffers_libres.splice(it_libres,KERNEL->CXs[id].RX,it_rx);
-//                }else {//si no copiamos
-//                    fprintf(stderr,"\nRECEIVE: el buffer aun contiene datos");
-//                    if (it_rx->bytes_restan > longitud) { //leemos lo que podamos del buffer de rx
-//                        memcpy(datos_aux, it_rx->ultimo_byte, longitud);
-//                        fprintf(stderr,"\nRECEIVE: bytes_restan>longitud -> copiados los datos del buffer");
-//                        it_rx->bytes_restan -= longitud;
-//                        it_rx->ultimo_byte+=longitud+1;
-//                        datos_aux+=longitud;
-//                        datos_recibidos += longitud;
-//                        datos_por_recibir -=longitud;
-//                    }else{//leemos todo el buffer de rx
-//                        memcpy(datos_aux, it_rx->ultimo_byte, it_rx->bytes_restan);
-//                        fprintf(stderr,"\nRECEIVE: bytes_restan<=longitud -> copiados los datos del buffer");
-//                        datos_por_recibir -= it_rx->bytes_restan;
-//                        it_rx->bytes_restan-=it_rx->bytes_restan;
-//                        it_rx->ultimo_byte+=it_rx->bytes_restan;
-//                        datos_recibidos += it_rx->bytes_restan;
-//                    }
-//                }
-                //actualizamos el indice
-  
             }
         }else{//si no hay datos en buffer RX-> DORMIRSE
             fprintf(stderr, "RECEIVE: el buffer de recepcion esta vacio, nos dormimos");
@@ -553,6 +633,9 @@ size_t t_receive(int id, void *datos, size_t longitud, int8_t *flags) {
             bloquea_llamada(&KERNEL->CXs[id].barC);
             bloquear_acceso(&KERNEL->SEMAFORO);
             //KERNEL->CXs[id].primitiva_dormida = false;
+        }
+        if(flag_fin_primitiva == 1){
+            break;
         }
     }
     // ..... aqui vuestro codigo
