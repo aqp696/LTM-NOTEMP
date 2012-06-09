@@ -471,7 +471,7 @@ size_t t_send(int id, const void *datos, size_t longitud, int8_t *flags) {
             /*if(KERNEL->tout_pkts.size() == 1){
                 interrumpe_daemon();
             }*/
-
+               
             it_tx->estado_pkt = no_confirmado;
             it_tx->contador_rtx = NUM_MAX_RTx;
             it_tx->num_secuencia = KERNEL->CXs[id].numero_secuencia;
