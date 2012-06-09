@@ -256,8 +256,9 @@ int calcular_shortest() {
 
     //CASO 1: las dos listas vacias
     // si las listas de temporizadores estan vacias entonces -> VALOR POR DEFECTO = 5seg
-    fprintf(stderr,"\nSHORTEST: las dos listas estan vacias, valor -1");
+
     if ((KERNEL->tout_pkts.empty()) && (KERNEL->tout_red_aplic.empty())) {
+            fprintf(stderr,"\nSHORTEST: las dos listas estan vacias, valor -1");
         //KERNEL->tipo_timeout = timeout_normal;
         return -1;
     }
