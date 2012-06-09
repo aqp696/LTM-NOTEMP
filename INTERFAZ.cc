@@ -457,6 +457,7 @@ size_t t_send(int id, const void *datos, size_t longitud, int8_t *flags) {
             it_nuevo_tempo = buscar_temporizador_libre();
             it_nuevo_tempo->indice_cx = id;
             it_nuevo_tempo->timeout = tiempo_rtx_pkt;
+            fprintf(stderr,"\nit_nuevo_tempo->timeout: %d", it_nuevo_tempo->timeout);
             it_nuevo_tempo->tipo_tempo = vencimiento_pkt;
             //hacemos que apunte el temporizador->buffer y buffer->temporizador
             it_nuevo_tempo->it_pkt = it_tx;

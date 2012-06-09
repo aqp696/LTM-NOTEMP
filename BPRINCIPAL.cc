@@ -109,6 +109,8 @@ void bucle_principal(void) {
                             it_libres = KERNEL->buffers_libres.begin();
                             KERNEL->buffers_libres.splice(it_libres,KERNEL->CXs[it_temp->indice_cx].TX);
                             KERNEL->buffers_libres.splice(it_libres,KERNEL->CXs[it_temp->indice_cx].RX);
+                            //kitamos el temporizador de red de la lista de temporizadores
+                            KERNEL->temporizadores_libres.splice(KERNEL->temporizadores_libres.end(),KERNEL->temporizadores_libres,it_temp);
                             fprintf(stderr,"\nVENCIMIENTO DE RED");
                             //apuntamos el resultado del EXNET en la conexion
                             KERNEL->CXs[it_temp->indice_cx].resultado_primitiva =  EXNET;
@@ -117,6 +119,7 @@ void bucle_principal(void) {
                             }
                         }
                         if(it_temp->tipo_tempo == vencimiento_aplic){
+                             KERNEL->temporizadores_libres.splice(KERNEL->temporizadores_libres.end(),KERNEL->temporizadores_libres,it_temp);
                             fprintf(stderr,"\nVENCIMIENTO DE APLICACION");
                         }
 
