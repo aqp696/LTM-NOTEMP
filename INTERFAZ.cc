@@ -300,6 +300,9 @@ int t_disconnect(int id) {
         return EXBADTID;
     }
 
+    //actualizamos el temporizador de la aplicacion
+    recalcular_temporizador_aplic(id);
+    
     //rellenamos datos de los TSAPs
     t_direccion tsap_destino, tsap_origen;
     tsap_origen.ip.s_addr = KERNEL->CXs[id].ip_local.s_addr;
@@ -313,7 +316,10 @@ int t_disconnect(int id) {
     it_tx = --KERNEL->CXs[id].TX.end();
     it_tx->contador_rtx = NUM_MAX_RTx;
     crear_pkt(it_tx->pkt, DR, &tsap_destino, &tsap_origen, NULL, 0, id, KERNEL->CXs[id].id_destino);
-    enviar_tpdu(tsap_destino.ip, it_tx->pkt, sizeof(tpdu));
+    //miramos si podemos enviarlo
+    if(KERNEL->CXs[id].TX.size() == 1){
+        enviar_tpdu(tsap_destino.ip, it_tx->pkt, sizeof(tpdu));
+    }
 
     //creamos el temporizador para el PKT_DR
     it_nuevo_tempo = buscar_temporizador_libre();
