@@ -427,6 +427,9 @@ void bucle_principal(void) {
                         KERNEL->CXs[puntero_pkt->cabecera.id_destino].estado_cx = CLOSED;
                         //liberamos la conexion
                         break;
+                    default:
+                        fprintf(stderr,"\nCHUPAMELAAAAAA, PKT DESCONOCIDO!!!!!");
+                        break;
 
                 }
                 
