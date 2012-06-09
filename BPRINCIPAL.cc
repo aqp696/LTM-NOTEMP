@@ -420,7 +420,9 @@ void bucle_principal(void) {
                         //liberamos los recursos
                         KERNEL->buffers_libres.splice(KERNEL->buffers_libres.begin(),KERNEL->CXs[puntero_pkt->cabecera.id_destino].TX);
                         KERNEL->buffers_libres.splice(KERNEL->buffers_libres.begin(), KERNEL->CXs[puntero_pkt->cabecera.id_destino].RX);
+                        fprintf(stderr,"\ntamanho antes del splice lista tempo_pkt: %d",KERNEL->tout_pkts.size());
                         KERNEL->temporizadores_libres.splice(KERNEL->temporizadores_libres.begin(),KERNEL->tout_pkts);
+                        fprintf(stderr,"\ntamanho despues del splice lista tempo_pkt: %d",KERNEL->tout_pkts.size());
                         KERNEL->CXs[puntero_pkt->cabecera.id_destino].celda_ocupada = 0;
                         KERNEL->CXs[puntero_pkt->cabecera.id_destino].estado_cx = CLOSED;
                         //liberamos la conexion
