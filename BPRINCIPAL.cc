@@ -86,14 +86,14 @@ void bucle_principal(void) {
 
     do {
         fprintf(stderr,"\nBPRINCIPAL: Entramos al shortest");
-        //shortest = calcular_shortest();
+        shortest = calcular_shortest();
         desbloquear_acceso(&KERNEL->SEMAFORO);
         fprintf(stderr,"\nBPRINCIPAL: shortest: %d",shortest);
         switch (ltm_wait4event(shortest)) {
 
             case TIME_OUT:
                 bloquear_acceso(&KERNEL->SEMAFORO);
-                /*
+                
                 comprobar_vencimientos();
 
                 //miramos qué ha vencido
@@ -154,8 +154,8 @@ void bucle_principal(void) {
                             
                         }
                         break;
-                }*/
-                fprintf(stderr,"\nEl protocolo despierta por TIMEOUT (hora: %ld)",time(0));
+                }
+                //fprintf(stderr,"\nEl protocolo despierta por TIMEOUT (hora: %ld)",time(0));
                 break;
 
             case INTERRUP:
