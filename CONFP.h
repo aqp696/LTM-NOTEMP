@@ -29,7 +29,7 @@ using namespace std;
 #define DEPURA 0
 
 //CALCULO DE VENCIMIENTO TEMPORIZADORES
-#define tiempo_rtx_pkt tiempo_actual()+200
+#define tiempo_rtx_pkt tiempo_actual()+100
 #define tiempo_rtx_red tiempo_actual()+60000
 #define tiempo_rtx_aplic tiempo_actual()+60000
 #define NUM_MAX_RTx 10
