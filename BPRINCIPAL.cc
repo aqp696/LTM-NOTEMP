@@ -148,16 +148,21 @@ void bucle_principal(void) {
                             fprintf(stderr,"\nRetransmitimos PKT");
                             //cogemos el iterador al buffer de tx
                             it_tx = it_temp->it_pkt;
+                            it_tx->contador_rtx--;
                             while(it_tx != KERNEL->CXs[it_temp->indice_cx].TX.end()) {
+                                
                                 enviar_tpdu(KERNEL->CXs[it_temp->indice_cx].ip_destino, it_tx->pkt, sizeof (tpdu));
-                                it_tx->contador_rtx--;
+                                //it_tx->contador_rtx--;
 
                                 //recalculamos el nuevo tiempo de vencimiento
                                 it_tx->it_tout_pkt->timeout = tiempo_rtx_pkt;
+                                fprintf(stderr,"\nnuevo_timeout: %d || Numero_secuencia: %d || nºretx: %d",it_tx->it_tout_pkt->timeout,it_tx->pkt->cabecera.numero_secuencia,it_tx->contador_rtx);
                                 it_nuevo_tempo = KERNEL->tout_pkts.end();
                                 //pasamos el temporizador al final de la lista
                                 KERNEL->tout_pkts.splice(it_nuevo_tempo, KERNEL->tout_pkts, it_tx->it_tout_pkt);
+                               // fprintf(stderr,"it_tx->it_tout_pkt");
                                 it_tx++;
+                                
                             }
                             
                         }
