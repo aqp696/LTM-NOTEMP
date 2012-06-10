@@ -184,7 +184,7 @@ void bucle_principal(void) {
                 if (rec >= 0) {
                     //fprintf(stderr,"desde la IP %s\ntexto del mensaje: %s\n",
                             //inet_ntop(AF_INET, &ip_remota, ipcharbuf, 20), pkt + offset);
-                            inet_ntop(AF_INET, &ip_remota, ipcharbuf, 20), it_libres->contenedor + offset);
+                            //inet_ntop(AF_INET, &ip_remota, ipcharbuf, 20), it_libres->contenedor + offset);
                 }
                 
                 //puntero_pkt = (tpdu *)(pkt+offset);
