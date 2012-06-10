@@ -567,6 +567,10 @@ size_t t_receive(int id, void *datos, size_t longitud, int8_t *flags) {
         return EXCLOSE;
     }
 
+    if((*flags)&&CLOSE == CLOSE){
+        KERNEL->CXs[id].close_aplicacion = true;
+    }
+    
     //miramos cuanto tenemos que recibir en el bucle
     int datos_por_recibir = longitud;
     int datos_recibidos = 0;
