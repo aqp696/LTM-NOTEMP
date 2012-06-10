@@ -520,7 +520,7 @@ size_t t_send(int id, const void *datos, size_t longitud, int8_t *flags) {
 size_t t_receive(int id, void *datos, size_t longitud, int8_t *flags) {
     char *datos_aux =(char *) datos;
     fprintf(stderr,"\nRECEIVE: receive de longitud: %d",longitud);
-    fprintf(stderr,"\nRECEIVE: obtenemos el kernel");
+    //fprintf(stderr,"\nRECEIVE: obtenemos el kernel");
     //obtenemos el KERNEL
     int er = ltm_get_kernel(dir_proto, (void**) & KERNEL);
     if (er < 0)
@@ -528,7 +528,7 @@ size_t t_receive(int id, void *datos, size_t longitud, int8_t *flags) {
     
     bloquear_acceso(&KERNEL->SEMAFORO);
     
-    fprintf(stderr,"\nRECEIVE: miramos si datos==NULL");
+    //fprintf(stderr,"\nRECEIVE: miramos si datos==NULL");
     //miramos si hay datos disponibles
     if((datos == NULL)||(longitud < 0)){
         desbloquear_acceso(&KERNEL->SEMAFORO);
@@ -536,7 +536,7 @@ size_t t_receive(int id, void *datos, size_t longitud, int8_t *flags) {
         return EXINVA;
     }
     
-    fprintf(stderr,"\nRECEIVE: miramos si la conexion esta ESTABLISHED");
+    //fprintf(stderr,"\nRECEIVE: miramos si la conexion esta ESTABLISHED");
     //miramos si existe la conexion establecida
     if(KERNEL->CXs[id].estado_cx != ESTABLISHED){
         desbloquear_acceso(&KERNEL->SEMAFORO);
@@ -544,7 +544,7 @@ size_t t_receive(int id, void *datos, size_t longitud, int8_t *flags) {
         return EXBADTID;
     }
     
-    fprintf(stderr,"\nRECEIVE: miramos si la entidad remota me mando un SEND_CLOSE");
+    //fprintf(stderr,"\nRECEIVE: miramos si la entidad remota me mando un SEND_CLOSE");
     //miramos si recibimos peticion de desconexion, y si no hay nada que entregar
     if(KERNEL->CXs[id].desconexion_remota == true && KERNEL->CXs[id].RX.size() == 0){
         desbloquear_acceso(&KERNEL->SEMAFORO);
@@ -568,14 +568,14 @@ size_t t_receive(int id, void *datos, size_t longitud, int8_t *flags) {
     //recalculamos el temporizador de aplicacion
     recalcular_temporizador_aplic(id);
 
-    fprintf(stderr,"\nRECEIVE: Empezamos a recibir");
+    //fprintf(stderr,"\nRECEIVE: Empezamos a recibir");
     //nos disponemos a recibir
     while(datos_por_recibir > 0){
         if(!(KERNEL->CXs[id].RX.empty())){//si hay datos en buffer RX ...
             fprintf(stderr,"\nRECEIVE: el buffer de RX no esta vacio, tamanho: %d",KERNEL->CXs[id].RX.size());
             num_buf_rx = KERNEL->CXs[id].RX.size();//lo hacemos porque si no variaria el size al hacer un splice
             for(indice=0; indice < num_buf_rx;indice++){
-                fprintf(stderr,"\nRECEIVE: miramos si la entidad remota hizo un DISCONNECT");
+                //fprintf(stderr,"\nRECEIVE: miramos si la entidad remota hizo un DISCONNECT");
                 //si la entidad remota hizo un DISCONNECT abrupto damos el error EXDISC
                 if(KERNEL->CXs[id].signal_disconnect == true) {
                     desbloquear_acceso(&KERNEL->SEMAFORO);
@@ -585,31 +585,31 @@ size_t t_receive(int id, void *datos, size_t longitud, int8_t *flags) {
                 
                 it_rx = KERNEL->CXs[id].RX.begin();
                 it_rx->pkt = (tpdu *)(it_rx->contenedor+20);
-                fprintf(stderr,"\nit_rx->pkt->cabecera.close: %d",it_rx->pkt->cabecera.close);
-                fprintf(stderr,"\nit_rx->pkt->cabecera.tipo: %d",it_rx->pkt->cabecera.tipo);
-                fprintf(stderr,"\nit_rx->pkt->cabecera.id_local: %d",it_rx->pkt->cabecera.id_local);
-                fprintf(stderr,"\nit_rx->pkt->cabecera.id_destino: %d",it_rx->pkt->cabecera.id_destino);
-                fprintf(stderr,"\nit_rx->pkt->cabecera.puerto_orig: %d",it_rx->pkt->cabecera.puerto_orig);
-                fprintf(stderr,"\nit_rx->pkt->cabecera.puerto_dest: %d",it_rx->pkt->cabecera.puerto_dest);
+                //fprintf(stderr,"\nit_rx->pkt->cabecera.close: %d",it_rx->pkt->cabecera.close);
+                //fprintf(stderr,"\nit_rx->pkt->cabecera.tipo: %d",it_rx->pkt->cabecera.tipo);
+                //fprintf(stderr,"\nit_rx->pkt->cabecera.id_local: %d",it_rx->pkt->cabecera.id_local);
+                //fprintf(stderr,"\nit_rx->pkt->cabecera.id_destino: %d",it_rx->pkt->cabecera.id_destino);
+                //fprintf(stderr,"\nit_rx->pkt->cabecera.puerto_orig: %d",it_rx->pkt->cabecera.puerto_orig);
+                //fprintf(stderr,"\nit_rx->pkt->cabecera.puerto_dest: %d",it_rx->pkt->cabecera.puerto_dest);
                 fprintf(stderr, "\nit_rx->pkt->cabecera.numero_secuencia: %d", it_rx->pkt->cabecera.numero_secuencia);
 
 
-                fprintf(stderr,"\nRECEIVE: Miramos si cabecera.close=1");
+                //fprintf(stderr,"\nRECEIVE: Miramos si cabecera.close=1");
                 //miramos si es el ultimo pakete con CLOSE para avisar a la aplicacion
                 if (it_rx->pkt->cabecera.close == 1) {
-                    fprintf(stderr,"\nRECEIVE: casca al comprobar la cabecera.close=1");
+                    //fprintf(stderr,"\nRECEIVE: casca al comprobar la cabecera.close=1");
                     *flags = (*flags || CLOSE);
                     flag_fin_primitiva = 1;
                     
                 }else{
-                    fprintf(stderr,"\nRECEIVE: la cabecera->close != 1");
+                    //fprintf(stderr,"\nRECEIVE: la cabecera->close != 1");
                 }
 
-                fprintf(stderr,"\nRECEIVE: datos_aux: %s",&(*datos_aux));
+                //fprintf(stderr,"\nRECEIVE: datos_aux: %s",&(*datos_aux));
                 //VERSION NUEVA!!!
                 if(it_rx->bytes_restan > longitud){//leemos lo que podamos del buffer de rx
                     memcpy(datos_aux,it_rx->ultimo_byte, longitud);
-                    fprintf(stderr,"\nRECEIVE: bytes_restan>longitud -> copiados los datos del buffer");
+                    //fprintf(stderr,"\nRECEIVE: bytes_restan>longitud -> copiados los datos del buffer");
                     it_rx->bytes_restan -= longitud;
                     it_rx->ultimo_byte+=longitud;
                     datos_aux+=longitud;
@@ -617,10 +617,10 @@ size_t t_receive(int id, void *datos, size_t longitud, int8_t *flags) {
                     datos_por_recibir-=longitud;
                 }else{//leemos todo el buffer de rx
                     memcpy(datos_aux,it_rx->ultimo_byte,it_rx->bytes_restan);
-                    fprintf(stderr,"\nRECEIVE: bytes_restan<=longitud->copiados los datos del buffer");
-                    fprintf(stderr,"\nRECEIVE: datos_por_recibir: %d",datos_por_recibir);
-                    fprintf(stderr,"\nRECEIVE: it_rx->bytes_restan: %d",it_rx->bytes_restan);
-                    fprintf(stderr,"\nRECEIVE: datos_recibidos: %d",datos_recibidos);
+                    //fprintf(stderr,"\nRECEIVE: bytes_restan<=longitud->copiados los datos del buffer");
+                    //fprintf(stderr,"\nRECEIVE: datos_por_recibir: %d",datos_por_recibir);
+                    //fprintf(stderr,"\nRECEIVE: it_rx->bytes_restan: %d",it_rx->bytes_restan);
+                    //fprintf(stderr,"\nRECEIVE: datos_recibidos: %d",datos_recibidos);
                     datos_por_recibir -= it_rx->bytes_restan;
                     datos_recibidos += it_rx->bytes_restan;
                     datos_aux+=it_rx->bytes_restan;
