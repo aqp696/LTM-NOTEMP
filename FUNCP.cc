@@ -258,40 +258,40 @@ int calcular_shortest() {
     // si las listas de temporizadores estan vacias entonces -> VALOR POR DEFECTO = 5seg
 
     if ((KERNEL->tout_pkts.empty()) && (KERNEL->tout_red_aplic.empty())) {
-            fprintf(stderr,"\nSHORTEST: las dos listas estan vacias, valor -1");
+            //fprintf(stderr,"\nSHORTEST: las dos listas estan vacias, valor -1");
         //KERNEL->tipo_timeout = timeout_normal;
         return -1;
     }
 
     if (!KERNEL->tout_pkts.empty()) {
-        fprintf(stderr,"\nSHORTEST: la lista de pkts no esta vacia");
+        //fprintf(stderr,"\nSHORTEST: la lista de pkts no esta vacia");
         it_tempo_pkt = KERNEL->tout_pkts.begin();
         tiempo_pkt = it_tempo_pkt->timeout;
-        fprintf(stderr,"\nSHORTEST: tiempo_pkt: %d",tiempo_pkt);
+        //fprintf(stderr,"\nSHORTEST: tiempo_pkt: %d",tiempo_pkt);
         tiempo_inact_pkt= tiempo_pkt - hora_actual;
-        fprintf(stderr,"\ntiempo_inact_pkt: %d",tiempo_inact_pkt);
+        //fprintf(stderr,"\ntiempo_inact_pkt: %d",tiempo_inact_pkt);
         if(tiempo_inact_pkt <= 0){
-            fprintf(stderr,"\nSHORTEST: entro aki");
+            //fprintf(stderr,"\nSHORTEST: entro aki");
             valor_shortest = 0;
             return valor_shortest;
         }
     }else{
-        fprintf(stderr,"\nSHORTEST: la lista de pkts esta vacia");
+        //fprintf(stderr,"\nSHORTEST: la lista de pkts esta vacia");
         no_temp_pkt = true;
     }
     
     if(!KERNEL->tout_red_aplic.empty()){
-        fprintf(stderr,"\nSHORTEST: la lista de red/aplic no esta vacia");
+        //fprintf(stderr,"\nSHORTEST: la lista de red/aplic no esta vacia");
         it_tempo_red_aplic = KERNEL->tout_red_aplic.begin();
         tiempo_red_aplic = it_tempo_red_aplic->timeout;
-        fprintf(stderr,"\nSHORTEST: tiempo_red_aplic: %d",tiempo_red_aplic);
+        //fprintf(stderr,"\nSHORTEST: tiempo_red_aplic: %d",tiempo_red_aplic);
         tiempo_inact_red_aplic = tiempo_red_aplic - hora_actual;
         if(tiempo_inact_red_aplic <= 0){
             valor_shortest = 0;
             return valor_shortest;
         }
     }else{
-        fprintf(stderr,"\nSHORTEST: la lista de red/aplic esta vacia");
+        //fprintf(stderr,"\nSHORTEST: la lista de red/aplic esta vacia");
         no_temp_red_aplic = true;
     }
     //no hay temporizador de red, pero sí hay temporizador de pakete
