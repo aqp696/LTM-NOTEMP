@@ -18,7 +18,7 @@ int t_connect(const t_direccion *tsap_destino, t_direccion *tsap_origen) {
     list<evento_t, shm_Allocator<evento_t> >::iterator it_nuevo_tempo;
     list<evento_t, shm_Allocator<evento_t> >::iterator it_temp;
 #ifdef DEPURA
-    fprintf(stderr,"\nObtenemos el Kernel");
+    //fprintf(stderr,"\nObtenemos el Kernel");
 #endif
     //entrar en KERNEL
     int er = ltm_get_kernel(dir_proto, (void**) & KERNEL);
@@ -27,10 +27,10 @@ int t_connect(const t_direccion *tsap_destino, t_direccion *tsap_origen) {
     
     bloquear_acceso(&KERNEL->SEMAFORO);
     
-    fprintf(stderr,"\nComprobamos parametros");
+    //fprintf(stderr,"\nComprobamos parametros");
     // comprobar parametros
     if (comprobar_parametros(tsap_destino,tsap_origen,'c') == -1) {
-        fprintf(stderr,"\nTSAPS incorrecto");
+        //fprintf(stderr,"\nTSAPS incorrecto");
         desbloquear_acceso(&KERNEL->SEMAFORO);
         ltm_exit_kernel((void**) &KERNEL);
         return EXINVA;
@@ -40,7 +40,7 @@ int t_connect(const t_direccion *tsap_destino, t_direccion *tsap_origen) {
 
     //bloquear_acceso(&KERNEL->SEMAFORO);
 
-    fprintf(stderr,"\nMiramos si hay espacio para una nueva conexion");
+    //fprintf(stderr,"\nMiramos si hay espacio para una nueva conexion");
     //miramos si hay espacio para una nueva conexion
     if(KERNEL->num_CXs == NUM_MAX_CXs){
         desbloquear_acceso(&KERNEL->SEMAFORO);
@@ -48,14 +48,14 @@ int t_connect(const t_direccion *tsap_destino, t_direccion *tsap_origen) {
         return EXMAXC;
     }
 
-    fprintf(stderr,"\nMiramos si el connect no esta repetido");
+    //fprintf(stderr,"\nMiramos si el connect no esta repetido");
     if(buscar_connect_repetido(tsap_origen,tsap_destino)>-1){
         desbloquear_acceso(&KERNEL->SEMAFORO);
         ltm_exit_kernel((void**)&KERNEL);
         return EXCDUP;
     }
 
-    fprintf(stderr,"\nBuscamos celda libre");
+    //fprintf(stderr,"\nBuscamos celda libre");
     //localizar celda libre, elimino la conexion libre y aumento el numero de conexiones.
     int indice_celda = buscar_celda_libre();
     KERNEL->CXs_libres.pop_front();
@@ -64,7 +64,7 @@ int t_connect(const t_direccion *tsap_destino, t_direccion *tsap_origen) {
     
     //int indice_celda = KERNEL->indice_libre;//siempre tendremos el indice libre mas bajo
 
-    fprintf(stderr,"\nRellenamos los datos de la conexion");
+    //fprintf(stderr,"\nRellenamos los datos de la conexion");
     //BLOQUEO
     //inicia_barrera(&KERNEL->CXs[indice_celda].barC);
 
@@ -78,28 +78,28 @@ int t_connect(const t_direccion *tsap_destino, t_direccion *tsap_origen) {
     KERNEL->CXs[indice_celda].puerto_destino = tsap_destino->puerto;
     //desbloquear_acceso(&KERNEL->SEMAFORO);
 
-    fprintf(stderr,"\ncreamos el pakete");
+    //fprintf(stderr,"\ncreamos el pakete");
     //creamos el paquete
     //usamos tsap_destino_aux porque este ya no es const y asi crear_pkt ya no es const
     it_buffer = buscar_buffer_libre();
     it_buffer->contador_rtx = NUM_MAX_RTx;
     it_tx = KERNEL->CXs[indice_celda].TX.end();
     KERNEL->CXs[indice_celda].TX.splice(it_tx,KERNEL->buffers_libres,it_buffer);
-    fprintf(stderr,"\nya hicimos el splice");
+    //fprintf(stderr,"\nya hicimos el splice");
     it_tx = --KERNEL->CXs[indice_celda].TX.end();//"--" se hace para que apunte al ultimo elemento, y no al vacio
     //it_tx->pkt = (tpdu *)(it_tx->contenedor);
-    fprintf(stderr,"\nit_tx->contador_rtx: %d",it_tx->contador_rtx);
-    fprintf(stderr,"\nit_buffer->contador_rtx: %d",it_buffer->contador_rtx);
+    //fprintf(stderr,"\nit_tx->contador_rtx: %d",it_tx->contador_rtx);
+    //fprintf(stderr,"\nit_buffer->contador_rtx: %d",it_buffer->contador_rtx);
 
     memcpy(&tsap_destino_aux,tsap_destino,sizeof(t_direccion));
-    fprintf(stderr,"\nvamos a llamar a crear_pkt");
+    //fprintf(stderr,"\nvamos a llamar a crear_pkt");
     crear_pkt(it_tx->pkt,CR,&tsap_destino_aux,tsap_origen,NULL,0,indice_celda,0);
-    fprintf(stderr,"\nEnviamos el pakete y nos bloqueamos");
-    fprintf(stderr,"\nit_tx->pkt->cabecera.num_secuencia: %d",it_tx->pkt->cabecera.numero_secuencia);
+    //fprintf(stderr,"\nEnviamos el pakete y nos bloqueamos");
+    //fprintf(stderr,"\nit_tx->pkt->cabecera.num_secuencia: %d",it_tx->pkt->cabecera.numero_secuencia);
     //pruebas
     it_tx = --KERNEL->CXs[indice_celda].TX.end();
     //it_tx->pkt=(tpdu *)(it_tx->contenedor);
-    fprintf(stderr,"\nvolvemos al it_tx-> it_tx->pkt->cabecera.num_secuencia: %d",it_tx->pkt->cabecera.numero_secuencia);
+    //fprintf(stderr,"\nvolvemos al it_tx-> it_tx->pkt->cabecera.num_secuencia: %d",it_tx->pkt->cabecera.numero_secuencia);
     //enviamos el paquete y nos bloqueamos
     enviar_tpdu(tsap_destino->ip,it_tx->pkt,sizeof(tpdu));
 
@@ -115,14 +115,14 @@ int t_connect(const t_direccion *tsap_destino, t_direccion *tsap_origen) {
     it_temp = KERNEL->tout_pkts.end();
     KERNEL->tout_pkts.splice(it_temp,KERNEL->temporizadores_libres,it_nuevo_tempo);
 
-    fprintf(stderr,"\nla id_local es: %d",indice_celda);
+    //fprintf(stderr,"\nla id_local es: %d",indice_celda);
     desbloquear_acceso(&KERNEL->SEMAFORO);
     bloquea_llamada(&KERNEL->CXs[indice_celda].barC);
     
     bloquear_acceso(&KERNEL->SEMAFORO);//bloqueamos para leer de kernel
     res = KERNEL->CXs[indice_celda].resultado_peticion;
 
-    fprintf(stderr,"\nComprobamos si hubo algun error en la conexion");
+    //fprintf(stderr,"\nComprobamos si hubo algun error en la conexion");
     //comprobamos si hubo algun error en la conexion
     if (KERNEL->CXs[indice_celda].estado_cx == CLOSED) {
         KERNEL->num_CXs--;
@@ -155,28 +155,28 @@ int t_connect(const t_direccion *tsap_destino, t_direccion *tsap_origen) {
 
     desbloquear_acceso(&KERNEL->SEMAFORO);
 
-    fprintf(stderr,"\nDevolvemos el kernel");
+    //fprintf(stderr,"\nDevolvemos el kernel");
     //devolvemos el KERNEL
     ltm_exit_kernel((void**)&KERNEL);
 
-    fprintf(stderr,"\nRetornamos a la aplicacion");
+    //fprintf(stderr,"\nRetornamos a la aplicacion");
     return indice_celda;
 }
 
 int t_listen(t_direccion *tsap_escucha, t_direccion *tsap_remota) {
     int res = EXOK;
 
-    fprintf(stderr,"\nEntramos al kernel");
+    //fprintf(stderr,"\nEntramos al kernel");
     //entramos en el kernel
     int er = ltm_get_kernel(dir_proto, (void**) & KERNEL);
     if (er < 0)
         return EXKERNEL;
 
     bloquear_acceso(&KERNEL->SEMAFORO);
-    fprintf(stderr,"\nComprobamos parametros del listen");
+    //fprintf(stderr,"\nComprobamos parametros del listen");
     // comprobar parametros metele ip local
     if (comprobar_parametros(tsap_remota, tsap_escucha, 'l') == -1) {
-        fprintf(stderr, "\nTSAPS incorrecto");
+        //fprintf(stderr, "\nTSAPS incorrecto");
         desbloquear_acceso(&KERNEL->SEMAFORO);
         ltm_exit_kernel((void**) &KERNEL);
         return EXINVA;
@@ -185,7 +185,7 @@ int t_listen(t_direccion *tsap_escucha, t_direccion *tsap_remota) {
         pid_t pid = gettid();
 
     //bloquear_acceso(&KERNEL->SEMAFORO);
-    fprintf(stderr,"\nMiramos si hay espacio para una nueva conexion");
+    //fprintf(stderr,"\nMiramos si hay espacio para una nueva conexion");
     //miramos si hay espacio para una nueva conexion
     if (KERNEL->num_CXs == NUM_MAX_CXs) {
         desbloquear_acceso(&KERNEL->SEMAFORO);
@@ -202,46 +202,46 @@ int t_listen(t_direccion *tsap_escucha, t_direccion *tsap_remota) {
 
 
 
-    fprintf(stderr,"\nBuscamos una celda libre");
+    //fprintf(stderr,"\nBuscamos una celda libre");
     //buscamos celda libre, eliminamos de la lista de cx_libres, y anotamos el numero de conexiones
     int indice_celda = buscar_celda_libre();
-    fprintf(stderr,"\nLa celda libre es: %d",indice_celda);
+    //fprintf(stderr,"\nLa celda libre es: %d",indice_celda);
     //KERNEL->CXs_libres.pop_front();
     KERNEL->num_CXs++;
 
     //bloquear acceso
 
-    fprintf(stderr,"\nRellenamos los datos de la conexion");
+    //fprintf(stderr,"\nRellenamos los datos de la conexion");
     KERNEL->CXs[indice_celda].ap_pid = pid;
     KERNEL->CXs[indice_celda].estado_cx = LISTEN;
     KERNEL->CXs[indice_celda].celda_ocupada = 1;
     KERNEL->CXs[indice_celda].ip_local = tsap_escucha->ip;
     KERNEL->CXs[indice_celda].puerto_origen = tsap_escucha->puerto;
     if (tsap_remota == NULL) {
-        fprintf(stderr,"\ntsap remota es null");
+       // fprintf(stderr,"\ntsap remota es null");
         KERNEL->CXs[indice_celda].ip_destino.s_addr = 0;
         KERNEL->CXs[indice_celda].puerto_destino = 0;
     } else {
-        fprintf(stderr,"\ntsap remota no es null");
+        //fprintf(stderr,"\ntsap remota no es null");
         KERNEL->CXs[indice_celda].ip_destino = tsap_remota->ip;
         KERNEL->CXs[indice_celda].puerto_destino = tsap_remota->puerto;
     }
     
     //desbloquear_acceso(&KERNEL->SEMAFORO);
 
-    fprintf(stderr,"\nNos dormimos a la espera de una conexion");
+    //fprintf(stderr,"\nNos dormimos a la espera de una conexion");
     
     //nos dormimos a la espera de conexion
-    fprintf(stderr,"\ndormimos al listen de indice: %d\n",indice_celda);
+    //fprintf(stderr,"\ndormimos al listen de indice: %d\n",indice_celda);
     desbloquear_acceso(&KERNEL->SEMAFORO);
     bloquea_llamada(&KERNEL->CXs[indice_celda].barC);
     //bloquea_llamada(&KERNEL->barrera);
-    fprintf(stderr,"\nNos despiertan, CONNECT recibido");
+    //fprintf(stderr,"\nNos despiertan, CONNECT recibido");
 
     bloquear_acceso(&KERNEL->SEMAFORO);
     res = KERNEL->CXs[indice_celda].resultado_peticion;
 
-    fprintf(stderr,"\nComprobamos si hubo algun error en la conexion");
+    //fprintf(stderr,"\nComprobamos si hubo algun error en la conexion");
     //comprobamos si hubo algun error en la conexion
     if (KERNEL->CXs[indice_celda].estado_cx == LISTEN) {
         desbloquear_acceso(&KERNEL->SEMAFORO);
@@ -274,7 +274,7 @@ int t_listen(t_direccion *tsap_escucha, t_direccion *tsap_remota) {
     
 
     desbloquear_acceso(&KERNEL->SEMAFORO);
-    fprintf(stderr,"\nDevolvemos el kernel y retornamos a la aplicacion");
+    //fprintf(stderr,"\nDevolvemos el kernel y retornamos a la aplicacion");
     ltm_exit_kernel((void**) & KERNEL);
     return indice_celda;
 }
@@ -345,7 +345,7 @@ size_t t_send(int id, const void *datos, size_t longitud, int8_t *flags) {
     list<evento_t, shm_Allocator<evento_t> >::iterator it_nuevo_tempo;
     list<evento_t, shm_Allocator<evento_t> >::iterator it_temp;
     //int res = EXOK;
-    fprintf(stderr,"\nsend de longitud: %d",longitud);
+    //fprintf(stderr,"\nsend de longitud: %d",longitud);
     //obtenemos el kernel
     int er = ltm_get_kernel(dir_proto, (void**) & KERNEL);  
     if (er < 0)
@@ -422,7 +422,7 @@ size_t t_send(int id, const void *datos, size_t longitud, int8_t *flags) {
         //miramos si tenemos espacio en buffer de TX
         if((KERNEL->CXs[id].TX.size() < KERNEL->NUM_BUF_PKTS)) {
             
-            fprintf(stderr,"\nSEND: hay espacio en el buffer de TX");
+           // fprintf(stderr,"\nSEND: hay espacio en el buffer de TX");
             //buscamos un buffer_libre
             it_libres = buscar_buffer_libre();
             //it_libres->pkt = (tpdu *)(it_libres->contenedor);
@@ -431,16 +431,16 @@ size_t t_send(int id, const void *datos, size_t longitud, int8_t *flags) {
             //puntero_datos = puntero_datos + tamanho;
             it_tx = KERNEL->CXs[id].TX.end();
             KERNEL->CXs[id].TX.splice(it_tx,KERNEL->buffers_libres,it_libres);
-            fprintf(stderr,"\nSEND: pasamos el buffer a la lista de TX");
+            //fprintf(stderr,"\nSEND: pasamos el buffer a la lista de TX");
             it_tx = --KERNEL->CXs[id].TX.end();
             it_tx->pkt = (tpdu *)(it_tx->contenedor);
             it_tx->contador_rtx = NUM_MAX_RTx;
             //creamos el pakete y lo enviamos, crear_pkt pone cabecera.close=0 por defecto
             crear_pkt(it_tx->pkt,DATOS,&tsap_destino,&tsap_origen,puntero_datos,tamanho,id,KERNEL->CXs[id].id_destino);
-            fprintf(stderr,"\nSEND: creado el pakete de DATOS");
+            //fprintf(stderr,"\nSEND: creado el pakete de DATOS");
                         //si es el ultimo PKT miramos si FLAGS = SEND_CLOSE
             if((numero_sends == 1)&&(((*flags)&CLOSE) == CLOSE) ){
-                fprintf(stderr,"\nSEND: es el ultimo pakete con MODO CLOSE");
+               // fprintf(stderr,"\nSEND: es el ultimo pakete con MODO CLOSE");
                 it_tx->pkt->cabecera.close = 1;// solo lo pongo a uno en el ultimo pakete
                 //creo que deberia poner signal_disconnect=true
                 KERNEL->CXs[id].signal_disconnect = true;
@@ -448,13 +448,13 @@ size_t t_send(int id, const void *datos, size_t longitud, int8_t *flags) {
                 //*flags=*flags & (0xFF^CLOSE);
             }
             
-            fprintf(stderr, "\nit_tx->pkt->cabecera.close: %d", it_tx->pkt->cabecera.close);
-            fprintf(stderr, "\nit_tx->pkt->cabecera.tipo: %d", it_tx->pkt->cabecera.tipo);
-            fprintf(stderr, "\nit_tx->pkt->cabecera.id_local: %d", it_tx->pkt->cabecera.id_local);
-            fprintf(stderr, "\nit_tx->pkt->cabecera.id_destino: %d", it_tx->pkt->cabecera.id_destino);
-            fprintf(stderr, "\nit_tx->pkt->cabecera.puerto_orig: %d", it_tx->pkt->cabecera.puerto_orig);
-            fprintf(stderr, "\nit_tx->pkt->cabecera.puerto_dest: %d", it_tx->pkt->cabecera.puerto_dest);
-            fprintf(stderr, "\nit_tx->pkt->cabecera.numero_secuencia: %d", it_tx->pkt->cabecera.numero_secuencia);
+            //fprintf(stderr, "\nit_tx->pkt->cabecera.close: %d", it_tx->pkt->cabecera.close);
+            //fprintf(stderr, "\nit_tx->pkt->cabecera.tipo: %d", it_tx->pkt->cabecera.tipo);
+            //fprintf(stderr, "\nit_tx->pkt->cabecera.id_local: %d", it_tx->pkt->cabecera.id_local);
+            //fprintf(stderr, "\nit_tx->pkt->cabecera.id_destino: %d", it_tx->pkt->cabecera.id_destino);
+            //fprintf(stderr, "\nit_tx->pkt->cabecera.puerto_orig: %d", it_tx->pkt->cabecera.puerto_orig);
+            //fprintf(stderr, "\nit_tx->pkt->cabecera.puerto_dest: %d", it_tx->pkt->cabecera.puerto_dest);
+            //fprintf(stderr, "\nit_tx->pkt->cabecera.numero_secuencia: %d", it_tx->pkt->cabecera.numero_secuencia);
 
 
             enviar_tpdu(tsap_destino.ip,it_tx->pkt,sizeof(tpdu));
@@ -463,7 +463,7 @@ size_t t_send(int id, const void *datos, size_t longitud, int8_t *flags) {
             it_nuevo_tempo = buscar_temporizador_libre();
             it_nuevo_tempo->indice_cx = id;
             it_nuevo_tempo->timeout = tiempo_rtx_pkt;
-            fprintf(stderr,"\nit_nuevo_tempo->timeout: %d", it_nuevo_tempo->timeout);
+            //fprintf(stderr,"\nit_nuevo_tempo->timeout: %d", it_nuevo_tempo->timeout);
             it_nuevo_tempo->tipo_tempo = vencimiento_pkt;
             //hacemos que apunte el temporizador->buffer y buffer->temporizador
             it_nuevo_tempo->it_pkt = it_tx;
@@ -472,7 +472,7 @@ size_t t_send(int id, const void *datos, size_t longitud, int8_t *flags) {
             it_temp = KERNEL->tout_pkts.end();
             KERNEL->tout_pkts.splice(it_temp, KERNEL->temporizadores_libres, it_nuevo_tempo);
 
-            fprintf(stderr,"\nSEND: enviado TDPU");
+            //fprintf(stderr,"\nSEND: enviado TDPU");
 
             //actualizamos el shortest provocando un interrumpe_daemon
             if(KERNEL->tout_pkts.size() == 1){
@@ -492,12 +492,12 @@ size_t t_send(int id, const void *datos, size_t longitud, int8_t *flags) {
                 tamanho = datos_a_transmitir;
             }
         }else{//si no me duermo
-            fprintf(stderr,"\nSEND: no hay espacio en lista de TX, me duermo");
+            //fprintf(stderr,"\nSEND: no hay espacio en lista de TX, me duermo");
             KERNEL->CXs[id].primitiva_dormida = true;
             desbloquear_acceso(&KERNEL->SEMAFORO);
             bloquea_llamada(&KERNEL->CXs[id].barC);
             bloquear_acceso(&KERNEL->SEMAFORO);
-            fprintf(stderr,"\nSEND: BPRINCIPAL me despierta, ya hay sitio en lista de TX");
+            //fprintf(stderr,"\nSEND: BPRINCIPAL me despierta, ya hay sitio en lista de TX");
             //KERNEL->CXs[id].primitiva_dormida = false;
             //miramos por que me despertaron y si hubo error
             if(KERNEL->CXs[id].resultado_primitiva == EXNET){
@@ -511,15 +511,15 @@ size_t t_send(int id, const void *datos, size_t longitud, int8_t *flags) {
     desbloquear_acceso(&KERNEL->SEMAFORO);
     
     // ..... aqui vuestro codigo
-    fprintf(stderr,"\nSEND: primitiva finalizada");
+    //fprintf(stderr,"\nSEND: primitiva finalizada");
     ltm_exit_kernel((void**) & KERNEL);
-    fprintf(stderr,"\nSEND: return datos_enviados: %d",datos_enviados);
+    //fprintf(stderr,"\nSEND: return datos_enviados: %d",datos_enviados);
     return datos_enviados;
 }
 
 size_t t_receive(int id, void *datos, size_t longitud, int8_t *flags) {
     char *datos_aux =(char *) datos;
-    fprintf(stderr,"\nRECEIVE: receive de longitud: %d",longitud);
+    //fprintf(stderr,"\nRECEIVE: receive de longitud: %d",longitud);
     //fprintf(stderr,"\nRECEIVE: obtenemos el kernel");
     //obtenemos el KERNEL
     int er = ltm_get_kernel(dir_proto, (void**) & KERNEL);
@@ -572,7 +572,7 @@ size_t t_receive(int id, void *datos, size_t longitud, int8_t *flags) {
     //nos disponemos a recibir
     while(datos_por_recibir > 0){
         if(!(KERNEL->CXs[id].RX.empty())){//si hay datos en buffer RX ...
-            fprintf(stderr,"\nRECEIVE: el buffer de RX no esta vacio, tamanho: %d",KERNEL->CXs[id].RX.size());
+           // fprintf(stderr,"\nRECEIVE: el buffer de RX no esta vacio, tamanho: %d",KERNEL->CXs[id].RX.size());
             num_buf_rx = KERNEL->CXs[id].RX.size();//lo hacemos porque si no variaria el size al hacer un splice
             for(indice=0; indice < num_buf_rx;indice++){
                 //fprintf(stderr,"\nRECEIVE: miramos si la entidad remota hizo un DISCONNECT");
@@ -591,7 +591,7 @@ size_t t_receive(int id, void *datos, size_t longitud, int8_t *flags) {
                 //fprintf(stderr,"\nit_rx->pkt->cabecera.id_destino: %d",it_rx->pkt->cabecera.id_destino);
                 //fprintf(stderr,"\nit_rx->pkt->cabecera.puerto_orig: %d",it_rx->pkt->cabecera.puerto_orig);
                 //fprintf(stderr,"\nit_rx->pkt->cabecera.puerto_dest: %d",it_rx->pkt->cabecera.puerto_dest);
-                fprintf(stderr, "\nit_rx->pkt->cabecera.numero_secuencia: %d", it_rx->pkt->cabecera.numero_secuencia);
+                //fprintf(stderr, "\nit_rx->pkt->cabecera.numero_secuencia: %d", it_rx->pkt->cabecera.numero_secuencia);
 
 
                 //fprintf(stderr,"\nRECEIVE: Miramos si cabecera.close=1");
@@ -634,7 +634,7 @@ size_t t_receive(int id, void *datos, size_t longitud, int8_t *flags) {
                 }
             }
         }else{//si no hay datos en buffer RX-> DORMIRSE
-            fprintf(stderr, "RECEIVE: el buffer de recepcion esta vacio, nos dormimos");
+            //fprintf(stderr, "RECEIVE: el buffer de recepcion esta vacio, nos dormimos");
             KERNEL->CXs[id].primitiva_dormida = true;
             desbloquear_acceso(&KERNEL->SEMAFORO);
             bloquea_llamada(&KERNEL->CXs[id].barC);

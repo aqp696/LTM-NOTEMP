@@ -39,9 +39,9 @@ int comprobar_parametros(const t_direccion *tsap_destino, t_direccion *tsap_orig
         case 'c':
             //comprobamos IP tsap origen, si es cero obtenemos ip_local
             if ((tsap_origen->ip).s_addr == 0) {
-                printf("\nObtenemos ip local");
+                //printf("\nObtenemos ip local");
                 if (obtener_IP_local((KERNEL->i_red).interfaz, &tsap_origen->ip) == 0) {
-                    printf("\nError al obtener_IP_local");
+                    //printf("\nError al obtener_IP_local");
                     return -1;
                 }
             }
@@ -49,7 +49,7 @@ int comprobar_parametros(const t_direccion *tsap_destino, t_direccion *tsap_orig
             if (tsap_origen->puerto == 0) {
                 int16_t puerto_aux;
                 puerto_aux = buscar_puerto_libre();
-                fprintf(stderr,"\nel puerto  es %d",puerto_aux);
+                //fprintf(stderr,"\nel puerto  es %d",puerto_aux);
                 tsap_origen->puerto = puerto_aux;
             }
             
@@ -62,16 +62,16 @@ int comprobar_parametros(const t_direccion *tsap_destino, t_direccion *tsap_orig
         case 'l':
             //si la ip de tsap_escucha es nula  lo completamos con la ip_local
             if ((tsap_origen->ip).s_addr == 0) {
-                printf("\nObtenemos ip local");
+                //printf("\nObtenemos ip local");
                 if (obtener_IP_local((KERNEL->i_red).interfaz, &(tsap_origen->ip)) == 0) {
-                    printf("\nError al obtener_IP_local");
+                    //printf("\nError al obtener_IP_local");
                     return -1;
                 }
-                printf("\niplocal es: %s",inet_ntoa(tsap_origen->ip));
+                //printf("\niplocal es: %s",inet_ntoa(tsap_origen->ip));
             }
             // si el puerto origen es cero damos error
             if(tsap_origen->puerto == 0){
-                printf("\nError: el puerto es cero");
+                //printf("\nError: el puerto es cero");
                 return -1;
             }
             
@@ -166,7 +166,7 @@ int buscar_connect_repetido(t_direccion *tsap_origen, const t_direccion *tsap_de
                 (KERNEL->CXs[i].puerto_destino==tsap_destino->puerto))||
                 (KERNEL->CXs[i].puerto_origen==tsap_origen->puerto)){
             encontrada=i;
-            fprintf(stderr,"\nconnect repetido");
+            //fprintf(stderr,"\nconnect repetido");
             break;
         }
     }
@@ -252,7 +252,7 @@ int calcular_shortest() {
     bool no_temp_pkt = false;
 
     hora_actual = tiempo_actual();
-    fprintf(stderr,"SHORTEST: hora_actual: %d",hora_actual);
+    //fprintf(stderr,"SHORTEST: hora_actual: %d",hora_actual);
 
     //CASO 1: las dos listas vacias
     // si las listas de temporizadores estan vacias entonces -> VALOR POR DEFECTO = 5seg
