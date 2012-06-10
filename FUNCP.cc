@@ -102,7 +102,7 @@ int buscar_celda_libre() {
 }
 
 void crear_pkt(tpdu *pkt,char tipo, t_direccion *tsap_destino,t_direccion *tsap_origen,void *datos,int longitud,int id_local,int id_destino){
-    printf("\nEstamos creando el paquete");
+    //printf("\nEstamos creando el paquete");
     pkt->cabecera.tipo = tipo;
     pkt->cabecera.puerto_dest = tsap_destino->puerto;
     pkt->cabecera.puerto_orig = tsap_origen->puerto;
@@ -113,7 +113,7 @@ void crear_pkt(tpdu *pkt,char tipo, t_direccion *tsap_destino,t_direccion *tsap_
     pkt->cabecera.id_local = id_local;
     pkt->cabecera.tamanho_datos=longitud;
     pkt->cabecera.numero_secuencia = KERNEL->CXs[id_local].numero_secuencia;
-    fprintf(stderr,"\nCopiamos los datos al pakete");
+    //fprintf(stderr,"\nCopiamos los datos al pakete");
    
         memcpy (pkt->datos,datos,longitud);
  

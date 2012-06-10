@@ -180,9 +180,9 @@ void bucle_principal(void) {
                 
                 //int rec = recibir_tpdu(pkt, MAX_LONG_PKT, &ip_remota, &offset);
                 int rec = recibir_tpdu(it_libres->contenedor, MAX_LONG_PKT, &ip_remota, &offset);
-                fprintf(stderr,"\nrec: %d",rec);
+                //fprintf(stderr,"\nrec: %d",rec);
                 if (rec >= 0) {
-                    fprintf(stderr,"desde la IP %s\ntexto del mensaje: %s\n",
+                    //fprintf(stderr,"desde la IP %s\ntexto del mensaje: %s\n",
                             //inet_ntop(AF_INET, &ip_remota, ipcharbuf, 20), pkt + offset);
                             inet_ntop(AF_INET, &ip_remota, ipcharbuf, 20), it_libres->contenedor + offset);
                 }
@@ -247,11 +247,11 @@ void bucle_principal(void) {
                         
                     case CR:
                         fprintf(stderr,"\nRecibido un CONEXION REQUEST");
-                        fprintf(stderr,"\npuntero_pkt->cabecera.puerto_orig: %d",puntero_pkt->cabecera.puerto_orig);
-                        fprintf(stderr,"\npuntero_pkt->cabecera.puerto_dest: %d",puntero_pkt->cabecera.puerto_dest);
-                        fprintf(stderr,"\npuntero_pkt->cabecera.id_destino: %d",puntero_pkt->cabecera.id_destino);
-                        fprintf(stderr,"\npuntero_pkt->cabecera.id_local: %d",puntero_pkt->cabecera.id_local);
-                        fprintf(stderr,"\nip_local: %s",inet_ntop(AF_INET,&(KERNEL->CXs[0].ip_local.s_addr),ipcharbuf,20));
+                        //fprintf(stderr,"\npuntero_pkt->cabecera.puerto_orig: %d",puntero_pkt->cabecera.puerto_orig);
+                        //fprintf(stderr,"\npuntero_pkt->cabecera.puerto_dest: %d",puntero_pkt->cabecera.puerto_dest);
+                        //fprintf(stderr,"\npuntero_pkt->cabecera.id_destino: %d",puntero_pkt->cabecera.id_destino);
+                        //fprintf(stderr,"\npuntero_pkt->cabecera.id_local: %d",puntero_pkt->cabecera.id_local);
+                        //fprintf(stderr,"\nip_local: %s",inet_ntop(AF_INET,&(KERNEL->CXs[0].ip_local.s_addr),ipcharbuf,20));
                        
                         //comprobar si tiene conexcion preparada en listen
                         resul = asign_conexion_CR(ip_remota,puntero_pkt);
@@ -287,17 +287,17 @@ void bucle_principal(void) {
 
                         
                         //creamos paquete CC
-                        fprintf(stderr,"\nCreamos pakete");
+                        //fprintf(stderr,"\nCreamos pakete");
                          crear_pkt(it_libres->pkt,CC,&tsap_destino,&tsap_origen,NULL,0,resul,puntero_pkt->cabecera.id_local);
-                         fprintf(stderr,"\nEnviamos pakete");
+                         //fprintf(stderr,"\nEnviamos pakete");
                          enviar_tpdu(ip_remota,it_libres->pkt,sizeof(tpdu));
-                         fprintf(stderr,"\nEnviamos tpdu");
+                         //fprintf(stderr,"\nEnviamos tpdu");
 
                          //despertamos al listen
-                         fprintf(stderr,"\nvamos a ejecutar despierta_conexion()");
-                         fprintf(stderr,"\ndespertamos la conexion de indice: %d",resul);
-                         fprintf(stderr,"%d",KERNEL->CXs[resul].puerto_origen);
-                         fprintf(stderr,"%d",KERNEL->CXs[resul].puerto_destino);
+                         //fprintf(stderr,"\nvamos a ejecutar despierta_conexion()");
+                         //fprintf(stderr,"\ndespertamos la conexion de indice: %d",resul);
+                         //fprintf(stderr,"%d",KERNEL->CXs[resul].puerto_origen);
+                         //fprintf(stderr,"%d",KERNEL->CXs[resul].puerto_destino);
                          //desbloquear_acceso(&KERNEL->SEMAFORO);
                          despierta_conexion(&KERNEL->CXs[resul].barC);
                          //desbloquear_acceso(&KERNEL->SEMAFORO);
