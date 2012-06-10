@@ -128,10 +128,12 @@ void bucle_principal(void) {
                         break;
                     //vencimiento de un temporizador de pkt
                     case timeout_pkt:
-                        fprintf(stderr,"\nVENCIMIENTO DE PKT");
+                        //fprintf(stderr,"\nVENCIMIENTO DE PKT",);
                         it_temp = KERNEL->it_temporizador_vencido;
+                        fprintf(stderr,"\nVENCIO PKT%d",it_temp->it_pkt->pkt->cabecera.numero_secuencia);
                         //miramos si se retransmitió el máximo de retransmisiones
                         if(it_temp->it_pkt->contador_rtx == 0) {
+                            fprintf(stderr,"\nAGOTADO NUM_RTX");
                             //liberamos los bufferes
                             it_libres = KERNEL->buffers_libres.begin();
                             KERNEL->buffers_libres.splice(it_libres, KERNEL->CXs[it_temp->indice_cx].TX);
@@ -340,23 +342,23 @@ void bucle_principal(void) {
                         
                     case DATOS:
                         fprintf(stderr,"\nRecibido un DATOS");
-                        fprintf(stderr,"\nit_libres->pkt->cabecera.numero_secuencia: %d",it_libres->pkt->cabecera.numero_secuencia);
+                        //fprintf(stderr,"\nit_libres->pkt->cabecera.numero_secuencia: %d",it_libres->pkt->cabecera.numero_secuencia);
                         fprintf(stderr,"\npuntero_pkt->cabecera.numero_secuencia: %d",puntero_pkt->cabecera.numero_secuencia);
                         
                         //miramos si hay sitio en buffer RX
                         if(KERNEL->CXs[puntero_pkt->cabecera.id_destino].RX.size() < (uint)NUM_BUF_PKTS){
-                            fprintf(stderr,"\nBPRINCIPAL: hay sitio en el buffer de RX");
+                            //fprintf(stderr,"\nBPRINCIPAL: hay sitio en el buffer de RX");
                             //miramos si es el num_seq esperado
                             if(puntero_pkt->cabecera.numero_secuencia == KERNEL->CXs[puntero_pkt->cabecera.id_destino].numero_secuencia){
-                                fprintf(stderr,"\nBPRINCIPAL: el numero de secuencia es el que estoy esperando");
+                                //fprintf(stderr,"\nBPRINCIPAL: el numero de secuencia es el que estoy esperando");
                                 //it_libres = buscar_buffer_libre();
                                 it_libres->bytes_restan = puntero_pkt->cabecera.tamanho_datos;
                                 it_libres->ultimo_byte = it_libres->pkt->datos;
                                 //memcpy(it_libres->contenedor,puntero_pkt,sizeof(tpdu));
-                                fprintf(stderr,"\nBPRINCIPAL: copiado el contenido del pkt al buffer");
+                                //fprintf(stderr,"\nBPRINCIPAL: copiado el contenido del pkt al buffer");
                                 it_rx = KERNEL->CXs[puntero_pkt->cabecera.id_destino].RX.end();
                                 KERNEL->CXs[puntero_pkt->cabecera.id_destino].RX.splice(it_rx,KERNEL->buffers_libres,it_libres);
-                                fprintf(stderr,"\nBPRINCIPAL: pasamos el buffer de libres a recepcion");
+                                //fprintf(stderr,"\nBPRINCIPAL: pasamos el buffer de libres a recepcion");
                                 //rellenamos datos de los TSAPs
                                 //t_direccion tsap_origen, tsap_destino;
                                 tsap_origen.ip.s_addr = KERNEL->CXs[puntero_pkt->cabecera.id_destino].ip_local.s_addr;
@@ -367,13 +369,13 @@ void bucle_principal(void) {
                                 //miramos si la conexion remota está cerrando su flujo
                                 //si se cumple, avisamos al KERNEL del evento
                                 if(puntero_pkt->cabecera.close == 1){
-                                    fprintf(stderr,"\nBPRINCIPAL: puntero_pkt->cabecera.close == 1");
+                                    //fprintf(stderr,"\nBPRINCIPAL: puntero_pkt->cabecera.close == 1");
                                     KERNEL->CXs[puntero_pkt->cabecera.id_destino].desconexion_remota = true;
                                 }
                                 
                                 //construimos el ACK y enviamos
                                 it_libres = buscar_buffer_libre();
-                                fprintf(stderr,"\nBPRINCIPAL: construimos ACK");
+                                //fprintf(stderr,"\nBPRINCIPAL: construimos ACK");
                                 crear_pkt(it_libres->pkt,ACK,&tsap_destino,&tsap_origen,NULL,0,puntero_pkt->cabecera.id_destino,puntero_pkt->cabecera.id_local);
                                 KERNEL->CXs[puntero_pkt->cabecera.id_destino].numero_secuencia++;//incrementamos numero_secuencia
                                 fprintf(stderr,"\nBPRINCIPAL: enviamos tpdu ACK");
