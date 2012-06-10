@@ -130,7 +130,7 @@ void bucle_principal(void) {
                     case timeout_pkt:
                         //fprintf(stderr,"\nVENCIMIENTO DE PKT",);
                         it_temp = KERNEL->it_temporizador_vencido;
-                        fprintf(stderr,"\nVENCIO PKT%d",it_temp->it_pkt->pkt->cabecera.numero_secuencia);
+                        fprintf(stderr,"\nVENCIO PKT%d||nºrtx: %d",it_temp->it_pkt->pkt->cabecera.numero_secuencia,it_temp->it_pkt->contador_rtx);
                         //miramos si se retransmitió el máximo de retransmisiones
                         if(it_temp->it_pkt->contador_rtx == 0) {
                             fprintf(stderr,"\nAGOTADO NUM_RTX");
