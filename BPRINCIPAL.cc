@@ -54,7 +54,8 @@ void bucle_principal(void) {
         
         KERNEL->CXs[i].estado_cx = CLOSED;
         KERNEL->CXs[i].signal_disconnect = false;
-        KERNEL->CXs[i].desconexion_remota = false;
+        KERNEL->CXs[i].close_aplicacion = false;
+        KERNEL->CXs[i].close_remoto = false;
         INICIA_LISTA(KERNEL->CXs[i].TX,buf_pkt);
         INICIA_LISTA(KERNEL->CXs[i].RX,buf_pkt);
     }
