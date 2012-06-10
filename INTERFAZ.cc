@@ -369,7 +369,12 @@ size_t t_send(int id, const void *datos, size_t longitud, int8_t *flags) {
         ltm_exit_kernel((void**)&KERNEL);
         return EXBADTID;
     }
-    
+
+    if (KERNEL->CXs[id].close_aplicacion) {
+        desbloquear_acceso(&KERNEL->SEMAFORO);
+        ltm_exit_kernel((void**) &KERNEL);
+        return EXCLOSE;
+    }
     
     //miramos cuantos sends hacen falta
     int numero_sends;
@@ -413,11 +418,11 @@ size_t t_send(int id, const void *datos, size_t longitud, int8_t *flags) {
         }
         
         //miramos si la TSAP remoto no ha cerrado su conexion
-        if(KERNEL->CXs[id].desconexion_remota){
-            desbloquear_acceso(&KERNEL->SEMAFORO);
-            ltm_exit_kernel((void**)&KERNEL);
-            return EXCLOSE;
-        }
+//        if(KERNEL->CXs[id].desconexion_remota){
+//            desbloquear_acceso(&KERNEL->SEMAFORO);
+//            ltm_exit_kernel((void**)&KERNEL);
+//            return EXCLOSE;
+//        }
         
         //miramos si tenemos espacio en buffer de TX
         if((KERNEL->CXs[id].TX.size() < KERNEL->NUM_BUF_PKTS)) {
@@ -443,7 +448,7 @@ size_t t_send(int id, const void *datos, size_t longitud, int8_t *flags) {
                // fprintf(stderr,"\nSEND: es el ultimo pakete con MODO CLOSE");
                 it_tx->pkt->cabecera.close = 1;// solo lo pongo a uno en el ultimo pakete
                 //creo que deberia poner signal_disconnect=true
-                KERNEL->CXs[id].signal_disconnect = true;
+                KERNEL->CXs[id].close_aplicacion = true;
                 //avisamos a la aplicacion del envio de todos los datos
                 //*flags=*flags & (0xFF^CLOSE);
             }
@@ -507,6 +512,12 @@ size_t t_send(int id, const void *datos, size_t longitud, int8_t *flags) {
             }
         }
     }
+
+    if (KERNEL->CXs[id].close_remoto) {
+        *flags = (*flags)||CLOSE;
+    }else{
+        *flags = (*flags)&&(!CLOSE);
+    }
     
     desbloquear_acceso(&KERNEL->SEMAFORO);
     
@@ -514,6 +525,7 @@ size_t t_send(int id, const void *datos, size_t longitud, int8_t *flags) {
     //fprintf(stderr,"\nSEND: primitiva finalizada");
     ltm_exit_kernel((void**) & KERNEL);
     //fprintf(stderr,"\nSEND: return datos_enviados: %d",datos_enviados);
+
     return datos_enviados;
 }
 
@@ -546,7 +558,7 @@ size_t t_receive(int id, void *datos, size_t longitud, int8_t *flags) {
     
     //fprintf(stderr,"\nRECEIVE: miramos si la entidad remota me mando un SEND_CLOSE");
     //miramos si recibimos peticion de desconexion, y si no hay nada que entregar
-    if(KERNEL->CXs[id].desconexion_remota == true && KERNEL->CXs[id].RX.size() == 0){
+    if(KERNEL->CXs[id].close_remoto == true){ //&& KERNEL->CXs[id].RX.size() == 0){
         desbloquear_acceso(&KERNEL->SEMAFORO);
         ltm_exit_kernel((void**)&KERNEL);
         return EXCLOSE;
@@ -594,16 +606,16 @@ size_t t_receive(int id, void *datos, size_t longitud, int8_t *flags) {
                 //fprintf(stderr, "\nit_rx->pkt->cabecera.numero_secuencia: %d", it_rx->pkt->cabecera.numero_secuencia);
 
 
-                //fprintf(stderr,"\nRECEIVE: Miramos si cabecera.close=1");
-                //miramos si es el ultimo pakete con CLOSE para avisar a la aplicacion
-                if (it_rx->pkt->cabecera.close == 1) {
-                    //fprintf(stderr,"\nRECEIVE: casca al comprobar la cabecera.close=1");
-                    *flags = (*flags || CLOSE);
-                    flag_fin_primitiva = 1;
-                    
-                }else{
-                    //fprintf(stderr,"\nRECEIVE: la cabecera->close != 1");
-                }
+//                //fprintf(stderr,"\nRECEIVE: Miramos si cabecera.close=1");
+//                //miramos si es el ultimo pakete con CLOSE para avisar a la aplicacion
+//                if (it_rx->pkt->cabecera.close == 1) {
+//                    //fprintf(stderr,"\nRECEIVE: casca al comprobar la cabecera.close=1");
+//                    *flags = (*flags || CLOSE);
+//                    flag_fin_primitiva = 1;
+//                    
+//                }else{
+//                    //fprintf(stderr,"\nRECEIVE: la cabecera->close != 1");
+//                }
 
                 //fprintf(stderr,"\nRECEIVE: datos_aux: %s",&(*datos_aux));
                 //VERSION NUEVA!!!
@@ -625,7 +637,18 @@ size_t t_receive(int id, void *datos, size_t longitud, int8_t *flags) {
                     datos_recibidos += it_rx->bytes_restan;
                     datos_aux+=it_rx->bytes_restan;
                     it_rx->ultimo_byte+=it_rx->bytes_restan;
-                    it_rx->bytes_restan -= it_rx->bytes_restan;                   
+                    it_rx->bytes_restan -= it_rx->bytes_restan;
+
+                    //fprintf(stderr,"\nRECEIVE: Miramos si cabecera.close=1");
+                    //miramos si es el ultimo pakete con CLOSE para avisar a la aplicacion
+                    if (it_rx->pkt->cabecera.close == 1) {
+                        //fprintf(stderr,"\nRECEIVE: casca al comprobar la cabecera.close=1");
+                        //*flags = (*flags || CLOSE);
+                        KERNEL->CXs[id].close_remoto = true;
+
+                    } else {
+                        //fprintf(stderr,"\nRECEIVE: la cabecera->close != 1");
+                    }
                     
                     //pasamos el buffer de rx a libres
                     it_libres = KERNEL->buffers_libres.end();
@@ -644,6 +667,12 @@ size_t t_receive(int id, void *datos, size_t longitud, int8_t *flags) {
         if(flag_fin_primitiva == 1){
             break;
         }
+    }
+    
+    if(KERNEL->CXs[id].close_remoto){
+        *flags = (*flags)||CLOSE;
+    }else{
+        *flags = (*flags)&&(!CLOSE);
     }
     // ..... aqui vuestro codigo
     desbloquear_acceso(&KERNEL->SEMAFORO);

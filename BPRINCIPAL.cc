@@ -373,10 +373,10 @@ void bucle_principal(void) {
                                 
                                 //miramos si la conexion remota está cerrando su flujo
                                 //si se cumple, avisamos al KERNEL del evento
-                                if(puntero_pkt->cabecera.close == 1){
-                                    //fprintf(stderr,"\nBPRINCIPAL: puntero_pkt->cabecera.close == 1");
-                                    KERNEL->CXs[puntero_pkt->cabecera.id_destino].desconexion_remota = true;
-                                }
+//                                if(puntero_pkt->cabecera.close == 1){
+//                                    //fprintf(stderr,"\nBPRINCIPAL: puntero_pkt->cabecera.close == 1");
+//                                    KERNEL->CXs[puntero_pkt->cabecera.id_destino].desconexion_remota = true;
+//                                }
                                 
                                 //construimos el ACK y enviamos
                                 it_libres = buscar_buffer_libre();
