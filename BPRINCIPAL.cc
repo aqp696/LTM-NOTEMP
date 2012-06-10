@@ -304,7 +304,7 @@ void bucle_principal(void) {
                          //bloquear_acceso(&KERNEL->SEMAFORO);
                         break;
                     case ACK:
-                        fprintf(stderr,"\nRecibido un ACK");
+                        fprintf(stderr,"\nRecibido un ACK%d",puntero_pkt->cabecera.numero_secuencia);
                         indice = KERNEL->CXs[puntero_pkt->cabecera.id_destino].TX.size();// lo hago porque size() varia en el bucle
                         it_tx = KERNEL->CXs[puntero_pkt->cabecera.id_destino].TX.begin();//apunta al principio de TX
                         fprintf(stderr,"\nit_tx->it_tout_pkt->timeout: %d",it_tx->it_tout_pkt->timeout);
