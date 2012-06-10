@@ -248,6 +248,9 @@ int t_listen(t_direccion *tsap_escucha, t_direccion *tsap_remota) {
         ltm_exit_kernel((void**) & KERNEL);
         return res;
     }
+    
+    tsap_remota->ip.s_addr = KERNEL->CXs[indice_celda].ip_destino.s_addr;
+    tsap_remota->puerto = KERNEL->CXs[indice_celda].puerto_destino;
 
     //iniciamos el temporizador de red y el de aplicacion
     list<evento_t, shm_Allocator<evento_t> >::iterator it_temp;

@@ -419,6 +419,9 @@ void bucle_principal(void) {
                         KERNEL->buffers_libres.splice(KERNEL->buffers_libres.begin(), KERNEL->CXs[puntero_pkt->cabecera.id_destino].RX);
                         KERNEL->CXs[puntero_pkt->cabecera.id_destino].celda_ocupada = 0;
                         KERNEL->CXs[puntero_pkt->cabecera.id_destino].estado_cx = CLOSED;
+                        
+                        KERNEL->CXs[puntero_pkt->cabecera.id_destino].signal_disconnect = true;
+                        
                         //miramos si hay que despertar a la primitiva
                         if(KERNEL->CXs[puntero_pkt->cabecera.id_destino].primitiva_dormida == true){
                             KERNEL->CXs[puntero_pkt->cabecera.id_destino].primitiva_dormida = false;
