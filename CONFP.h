@@ -32,7 +32,7 @@ using namespace std;
 #define tiempo_rtx_pkt tiempo_actual()+200
 #define tiempo_rtx_red tiempo_actual()+60000
 #define tiempo_rtx_aplic tiempo_actual()+60000
-#define NUM_MAX_RTx 6
+#define NUM_MAX_RTx 10
 
 //ESTADOS DE ENVIO DE PKT
 #define no_confirmado 1
